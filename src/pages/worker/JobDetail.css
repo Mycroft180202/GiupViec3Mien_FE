@@ -1,0 +1,346 @@
+.job-detail-page {
+  padding: 1.5rem 1rem 5rem;
+  max-width: 1200px;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+}
+
+.back-link:hover {
+  color: var(--primary-color);
+}
+
+.job-detail-layout {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+/* Main Content */
+.job-main-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.job-header-card {
+  border-top: 4px solid var(--primary-color);
+}
+
+.job-title-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.job-title {
+  font-size: 1.75rem;
+  margin: 0;
+  color: var(--text-main);
+  line-height: 1.3;
+}
+
+.job-status-badge {
+  background-color: rgba(39, 174, 96, 0.1);
+  color: var(--status-success);
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.job-meta-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.meta-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--bg-main);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.meta-badge.alert {
+  background-color: rgba(242, 153, 74, 0.1);
+  color: #D97706; /* Darker orange */
+}
+
+.job-price-highlight {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--border-color);
+  padding-top: 1.5rem;
+}
+
+.price-box {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.price-amount {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+/* Content Details */
+.section-title {
+  font-size: 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.job-description-text {
+  color: var(--text-main);
+  line-height: 1.7;
+}
+
+.job-description-text p {
+  margin-bottom: 0.75rem;
+}
+
+.job-requirements-list {
+  list-style: none;
+  padding: 0;
+}
+
+.job-requirements-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.5;
+}
+
+/* Sidebar */
+.job-sidebar {
+  width: 320px;
+  flex-shrink: 0;
+}
+
+.sidebar-title {
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.employer-profile {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.employer-avatar {
+  background-color: var(--bg-main);
+  color: var(--text-muted);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.employer-name {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.1rem;
+}
+
+.employer-rating {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.verification-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: rgba(39, 174, 96, 0.1);
+  color: var(--status-success);
+  padding: 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.employer-join-date {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.meta-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.meta-list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.meta-list-item strong {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-bottom: 0.1rem;
+}
+
+.meta-list-item p {
+  margin: 0;
+  font-weight: 500;
+  color: var(--text-main);
+}
+
+/* Base Util Classes */
+.mt-2 { margin-top: 0.5rem; }
+.mt-4 { margin-top: 1.5rem; }
+.mb-2 { margin-bottom: 0.5rem; }
+.mb-4 { margin-bottom: 1.5rem; }
+.text-muted { color: var(--text-muted); }
+.text-success { color: var(--status-success); }
+.text-warning { color: var(--status-warning); }
+.text-primary { color: var(--primary-color); }
+
+/* Apply Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.apply-modal {
+  background-color: var(--bg-card);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 500px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.modal-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  margin: 0;
+}
+
+.close-btn {
+  font-size: 1.5rem;
+  color: var(--text-muted);
+}
+
+.close-btn:hover {
+  color: var(--text-main);
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.modal-job-summary {
+  background-color: var(--bg-main);
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--primary-color);
+}
+
+.modal-footer {
+  padding: 1.25rem 1.5rem;
+  background-color: var(--bg-main);
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.modal-success.state-center {
+  padding: 3rem 2rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Mobile Adjustments */
+.mobile-apply-bar {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .job-detail-layout {
+    flex-direction: column;
+  }
+  
+  .job-sidebar {
+    width: 100%;
+  }
+
+  .apply-btn-desktop {
+    display: none;
+  }
+
+  .mobile-apply-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: var(--bg-card);
+    padding: 1rem;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    z-index: 90;
+  }
+
+  .mobile-price {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: var(--primary-color);
+  }
+}
+
+@media (max-width: 600px) {
+  .job-title-wrapper {
+    flex-direction: column;
+  }
+  .job-title {
+    font-size: 1.5rem;
+  }
+}

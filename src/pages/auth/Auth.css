@@ -1,0 +1,132 @@
+.auth-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+.auth-image-panel {
+  flex: 1;
+  background: linear-gradient(135deg, rgba(47, 128, 237, 0.9) 0%, rgba(27, 101, 201, 0.95) 100%),
+              url('https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1470&auto=format&fit=crop') center/cover;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  color: white;
+  padding: 3rem;
+}
+
+.auth-brand {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.auth-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: white;
+  font-weight: 500;
+  width: fit-content;
+  opacity: 0.9;
+  transition: opacity var(--transition-fast);
+}
+
+.auth-back-link:hover {
+  opacity: 1;
+  color: white;
+}
+
+.auth-slogan-wrapper {
+  margin-top: auto;
+  margin-bottom: 2rem;
+}
+
+.auth-slogan {
+  font-size: 3rem;
+  color: white;
+  margin-bottom: 1rem;
+}
+
+.auth-form-panel {
+  flex: 1;
+  max-width: 600px;
+  background-color: var(--bg-card);
+  display: flex;
+  flex-direction: column;
+  padding: 2rem;
+}
+
+.auth-form-wrapper {
+  margin: auto;
+  width: 100%;
+  max-width: 440px;
+}
+
+.auth-title {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-main);
+}
+
+.auth-subtitle {
+  color: var(--text-muted);
+  margin-bottom: 2rem;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.auth-links {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  font-size: var(--font-size-small);
+}
+
+.auth-form-footer {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--font-size-small);
+  margin-top: auto;
+  padding-top: 2rem;
+}
+
+/* Auth Tabs for Register */
+.auth-tabs {
+  display: flex;
+  background-color: var(--bg-main);
+  padding: 0.25rem;
+  border-radius: var(--radius-md);
+  margin-bottom: 2rem;
+}
+
+.auth-tab {
+  flex: 1;
+  text-align: center;
+  padding: 0.75rem;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  color: var(--text-muted);
+  transition: all var(--transition-fast);
+}
+
+.auth-tab.active {
+  background-color: var(--bg-card);
+  color: var(--primary-color);
+  box-shadow: var(--shadow-sm);
+}
+
+@media (max-width: 900px) {
+  .auth-image-panel {
+    display: none;
+  }
+  .auth-form-panel {
+    max-width: 100%;
+    padding: 1.5rem;
+  }
+}

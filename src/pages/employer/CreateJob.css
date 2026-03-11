@@ -1,0 +1,249 @@
+.create-job-page {
+  padding: 3rem 1rem;
+  max-width: 900px;
+}
+
+.page-header {
+  margin-bottom: 2.5rem;
+}
+
+.page-header h2 {
+  font-size: 2.25rem;
+  color: var(--primary-color);
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  color: var(--text-muted);
+  font-size: 1.1rem;
+}
+
+.form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Stepper (Progress Bar) */
+.stepper-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  position: relative;
+  max-width: 700px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+  flex: 1;
+}
+
+.step-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: var(--bg-card);
+  border: 2px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  transition: all var(--transition-normal);
+}
+
+.step-title {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.step-line {
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  right: -50%;
+  height: 2px;
+  background-color: var(--border-color);
+  z-index: -1;
+}
+
+/* States */
+.step-item.active .step-circle {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  background-color: rgba(47, 128, 237, 0.1);
+}
+
+.step-item.active .step-title {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.step-item.completed .step-circle {
+  background-color: var(--secondary-color);
+  border-color: var(--secondary-color);
+  color: white;
+}
+
+.step-item.completed .step-line {
+  background-color: var(--secondary-color);
+}
+
+/* Form Elements */
+.section-subtitle {
+  font-size: 1.25rem;
+  margin-bottom: 1.5rem;
+  color: var(--text-main);
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 0.5rem;
+  display: inline-block;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.textarea-field {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.mt-4 {
+  margin-top: 1.5rem;
+}
+
+/* Job Types Selection Grid */
+.job-types-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.job-type-card {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  background-color: var(--bg-card);
+}
+
+.job-type-card:hover {
+  border-color: var(--primary-color);
+  background-color: rgba(47, 128, 237, 0.05);
+}
+
+.job-type-card.active {
+  border-color: var(--primary-color);
+  background-color: rgba(47, 128, 237, 0.1);
+  box-shadow: 0 0 0 1px var(--primary-color);
+}
+
+.type-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.type-label {
+  font-weight: 500;
+  text-align: center;
+  font-size: 0.95rem;
+}
+
+/* Pricing Input */
+.price-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.price-suffix {
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-top: 1rem; /* align visually with input */
+}
+
+/* Summary Card */
+.summary-card {
+  background-color: #F8FAFC;
+  border: 1px dashed var(--primary-color);
+}
+
+.summary-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.summary-header h4 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.summary-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.summary-list li {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
+}
+
+.text-success { color: var(--status-success); }
+.text-primary { color: var(--primary-color); font-weight: bold; }
+
+/* Actions */
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--border-color);
+  padding-top: 1.5rem;
+}
+
+.push-right {
+  margin-left: auto;
+}
+
+/* Utils */
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 768px) {
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .step-title {
+    display: none; /* Hide text on mobile, keep icons */
+  }
+}
