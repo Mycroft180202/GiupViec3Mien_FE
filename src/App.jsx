@@ -32,7 +32,7 @@ const NotFound = () => (
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <Routes>
         {/* Main Public Routes */}
         <Route element={<MainLayout />}>
