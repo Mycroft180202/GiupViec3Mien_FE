@@ -21,7 +21,7 @@ const DashboardLayout = () => {
   };
 
   const employerLinks = [
-    { to: '/dashboard/quan-ly-tin', icon: <Briefcase size={20} />, label: 'Quản lý tin đăng' },
+    { to: '/dashboard/quan-ly-tin', icon: <Briefcase size={20} />, label: 'Việc đã đăng' },
     { to: '/dashboard/ung-vien', icon: <FileText size={20} />, label: 'Hồ sơ ứng viên' },
   ];
 

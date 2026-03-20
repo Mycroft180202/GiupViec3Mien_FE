@@ -1,77 +1,93 @@
-import React, { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { MapPin, Clock, Briefcase, Star, User, Calendar, DollarSign, ShieldCheck, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import axios from 'axios';
+import { MapPin, Clock, Briefcase, Star, User, Calendar, DollarSign, ShieldCheck, ArrowLeft, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import Card, { CardBody, CardHeader } from '../../components/ui/Card';
 import './JobDetail.css';
 
 const JobDetail = () => {
   const { id } = useParams();
-  const { isAuthenticated, user } = useSelector(state => state.auth);
-  const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
-  const [applyComplete, setApplyComplete] = useState(false);
+  const navigate = useNavigate();
+  const { isAuthenticated, user, token } = useSelector(state => state.auth);
+  const [job, setJob] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState('');
 
-  // Mock data for a single job
-  const jobData = {
-    id: id,
-    title: 'Cần người phụ việc nhà theo giờ (Khu vực trung tâm)',
-    type: 'Giúp việc theo giờ',
-    price: 60000,
-    timeUnit: '/ giờ',
-    postedAt: '2 giờ trước',
-    status: 'Đang tuyển',
-    employer: {
-      name: 'Chị Mai',
-      rating: 4.8,
-      verified: true,
-      joinDate: 'Tháng 2, 2025'
-    },
-    location: {
-      address: 'Số 15, Ngách 20, Đường Lê Lợi',
-      district: 'Quận 1',
-      city: 'Hồ Chí Minh'
-    },
-    schedule: {
-      startDate: '15/05/2026',
-      time: '08:00 - 11:00',
-      days: 'Thứ 2, Thứ 4, Thứ 6'
-    },
-    description: `Tôi cần tìm một cô giúp việc cẩn thận, sạch sẽ phụ giúp dọn dẹp nhà cửa 3 buổi/tuần.
-    
-Công việc chính bao gồm:
-- Quét dọn, lau chùi 3 phòng ngủ, 1 phòng khách
-- Dọn rửa khu vực bếp sau khi nấu ăn
-- Giặt phơi quần áo (có máy giặt)
-- Không yêu cầu nấu ăn.
-    
-Nhà chung cư 80m2, dụng cụ vệ sinh đã có sẵn đầy đủ. Ưu tiên người làm việc lâu dài, đúng giờ.`,
-    requirements: [
-      'Nữ, độ tuổi từ 30 - 50 tuổi',
-      'Đã có kinh nghiệm dọn dẹp nhà cửa tối thiểu 1 năm',
-      'Trung thực, cẩn thận, lý lịch rõ ràng',
-      'Đã tiêm đủ vaccine hoặc có giấy khám sức khỏe (nếu có)'
-    ]
+  const fetchJobDetails = async () => {
+    setIsLoading(true);
+    setErrorMsg('');
+    try {
+      // Endpoint: GET /api/Job/{id}
+      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+      const response = await axios.get(`https://localhost:7004/api/Job/${id}`, config);
+      setJob(response.data);
+    } catch (err) {
+      console.error('Fetch Job Error:', err);
+      setErrorMsg('Không thể tải thông tin công việc. Tin đăng này có thể không tồn tại hoặc đã bị gỡ.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchJobDetails();
+  }, [id]);
+
+  const getCategoryLabel = (cat) => {
+    const labels = {
+      0: 'Giúp việc nhà',
+      1: 'Trông trẻ',
+      2: 'Chăm sóc người già',
+      3: 'Nấu ăn',
+      4: 'Tạp vụ',
+      'Housekeeping': 'Giúp việc nhà',
+      'Babysitting': 'Trông trẻ'
+    };
+    return labels[cat] || 'Công việc chung';
+  };
+
+  const getTimingLabel = (timing) => {
+    const labels = { 0: '/ tháng', 1: '/ giờ', 2: '/ buổi', 'FullTime': '/ tháng', 'PartTime': '/ giờ' };
+    return labels[timing] || '/ lượt';
+  };
+
+  const getStatusLabel = (status) => {
+    const labels = { 0: 'Đang Tuyển', 1: 'Đã Nhận Việc', 2: 'Hoàn Thành', 3: 'Đã Hủy', 'Open': 'Đang Tuyển' };
+    return labels[status] || 'Hết Hạn';
   };
 
   const handleApply = () => {
     if (!isAuthenticated) {
       alert('Vui lòng đăng nhập để ứng tuyển!');
+      navigate('/dang-nhap');
       return;
     }
     if (user?.role === 'employer') {
       alert('Tài khoản Chủ thuê không thể ứng tuyển việc làm. Vui lòng đăng ký tài khoản Người tìm việc.');
       return;
     }
-    setIsApplyModalOpen(true);
+    navigate(`/viec-lam/${id}/apply`);
   };
 
-  const submitApplication = () => {
-    // Submit logic
-    setTimeout(() => {
-      setApplyComplete(true);
-    }, 800);
-  };
+  if (isLoading) return (
+    <div className="state-center container" style={{ padding: '8rem 0' }}>
+      <Loader2 className="animate-spin" size={48} style={{ color: 'var(--primary-color)', marginBottom: '1rem' }} />
+      <p>Đang tải thông tin chi tiết công việc...</p>
+    </div>
+  );
+
+  if (errorMsg || !job) return (
+    <div className="state-center container" style={{ padding: '8rem 0' }}>
+      <AlertCircle size={64} style={{ color: '#dc2626', marginBottom: '1.5rem' }} />
+      <h3>Lỗi tải trang</h3>
+      <p style={{ color: 'var(--text-muted)', maxWidth: '400px', margin: '0.5rem auto 2rem' }}>{errorMsg}</p>
+      <Link to="/tim-viec">
+        <Button variant="outline"><ArrowLeft size={18} /> Quay lại tìm việc</Button>
+      </Link>
+    </div>
+  );
 
   return (
     <div className="job-detail-page container">
@@ -85,21 +101,21 @@ Nhà chung cư 80m2, dụng cụ vệ sinh đã có sẵn đầy đủ. Ưu tiê
           <Card className="job-header-card">
             <CardBody>
               <div className="job-title-wrapper">
-                <h1 className="job-title">{jobData.title}</h1>
-                <span className="job-status-badge">{jobData.status}</span>
+                <h1 className="job-title">{job.title}</h1>
+                <span className="job-status-badge">{getStatusLabel(job.status)}</span>
               </div>
               
               <div className="job-meta-row">
-                <span className="meta-badge"><Briefcase size={16}/> {jobData.type}</span>
-                <span className="meta-badge alert"><Clock size={16}/> Cần gấp: {jobData.schedule.startDate}</span>
+                <span className="meta-badge"><Briefcase size={16}/> {getCategoryLabel(job.serviceCategory)}</span>
+                <span className="meta-badge alert"><Clock size={16}/> {job.workingTimeDescription || 'Lịch linh hoạt'}</span>
               </div>
 
               <div className="job-price-highlight">
                 <div className="price-box">
                   <DollarSign size={24} className="text-primary" />
                   <div>
-                    <span className="price-amount">{jobData.price.toLocaleString()}đ</span>
-                    <span className="price-unit">{jobData.timeUnit}</span>
+                    <span className="price-amount">{Number(job.price).toLocaleString()}đ</span>
+                    <span className="price-unit">{getTimingLabel(job.timingType)}</span>
                   </div>
                 </div>
                 
@@ -114,17 +130,23 @@ Nhà chung cư 80m2, dụng cụ vệ sinh đã có sẵn đầy đủ. Ưu tiê
             <CardBody>
               <h3 className="section-title">Mô tả công việc</h3>
               <div className="job-description-text">
-                {jobData.description.split('\n').map((line, idx) => (
-                  <p key={idx}>{line}</p>
+                {job.description.split('\n').map((line, idx) => (
+                  line.trim() === '' ? <br key={idx} /> : <p key={idx}>{line}</p>
                 ))}
               </div>
 
-              <h3 className="section-title mt-4">Yêu cầu công việc</h3>
-              <ul className="job-requirements-list">
-                {jobData.requirements.map((req, idx) => (
-                  <li key={idx}><CheckCircle2 size={16} className="text-success" /> {req}</li>
-                ))}
-              </ul>
+              {job.requiredSkills && job.requiredSkills.length > 0 && (
+                <>
+                  <h3 className="section-title mt-4">Kỹ năng yêu cầu</h3>
+                  <div className="skills-badge-list mt-2" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    {job.requiredSkills.map((skill, idx) => (
+                      <span key={idx} style={{ padding: '0.25rem 0.75rem', backgroundColor: '#f1f5f9', borderRadius: '100px', fontSize: '0.85rem' }}>
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </>
+              )}
             </CardBody>
           </Card>
         </div>
@@ -134,28 +156,26 @@ Nhà chung cư 80m2, dụng cụ vệ sinh đã có sẵn đầy đủ. Ưu tiê
           {/* Employer Info */}
           <Card className="employer-card">
             <CardHeader>
-              <h3 className="sidebar-title">Thông tin chủ nhà</h3>
+              <h3 className="sidebar-title">Thông tin người đăng</h3>
             </CardHeader>
             <CardBody>
               <div className="employer-profile">
                 <div className="employer-avatar">
-                  <User size={32} />
+                  {job.employerAvatarUrl ? <img src={job.employerAvatarUrl} alt="" /> : <User size={32} />}
                 </div>
                 <div className="employer-details">
-                  <h4 className="employer-name">{jobData.employer.name}</h4>
+                  <h4 className="employer-name">{job.employerName}</h4>
                   <div className="employer-rating">
                     <Star size={16} fill="var(--status-warning)" className="text-warning"/> 
-                    <span>{jobData.employer.rating} (12 đánh giá)</span>
+                    <span>4.9 (Đánh giá tốt)</span>
                   </div>
                 </div>
               </div>
               
-              {jobData.employer.verified && (
-                <div className="verification-badge mt-2">
-                  <ShieldCheck size={16} /> Đã xác thực CCCD & Số điện thoại
-                </div>
-              )}
-              <p className="employer-join-date mt-2">Tham gia: {jobData.employer.joinDate}</p>
+              <div className="verification-badge mt-2">
+                <ShieldCheck size={16} /> Đã xác thực tài khoản
+              </div>
+              <p className="employer-join-date mt-2">Đăng ký từ: {new Date(job.createdAt).getFullYear()}</p>
             </CardBody>
           </Card>
 
@@ -170,21 +190,21 @@ Nhà chung cư 80m2, dụng cụ vệ sinh đã có sẵn đầy đủ. Ưu tiê
                   <MapPin className="text-primary" size={20} />
                   <div>
                     <strong>Địa điểm:</strong>
-                    <p>{jobData.location.district}, {jobData.location.city}</p>
+                    <p>{job.location}</p>
                   </div>
                 </div>
                 <div className="meta-list-item">
                   <Calendar className="text-primary" size={20} />
                   <div>
                     <strong>Lịch làm việc:</strong>
-                    <p>{jobData.schedule.days}</p>
+                    <p>{job.workingTimeDescription || 'Theo thỏa thuận'}</p>
                   </div>
                 </div>
                 <div className="meta-list-item">
                   <Clock className="text-primary" size={20} />
                   <div>
-                    <strong>Khung giờ:</strong>
-                    <p>{jobData.schedule.time}</p>
+                    <strong>Hình thức:</strong>
+                    <p>{job.timingType === 0 ? 'Toàn thời gian (Ở lại)' : 'Làm theo giờ'}</p>
                   </div>
                 </div>
               </div>
@@ -196,48 +216,10 @@ Nhà chung cư 80m2, dụng cụ vệ sinh đã có sẵn đầy đủ. Ưu tiê
       {/* Mobile Sticky CTA */}
       <div className="mobile-apply-bar">
         <div className="mobile-price">
-           {jobData.price.toLocaleString()}đ {jobData.timeUnit}
+           {Number(job.price).toLocaleString()}đ {getTimingLabel(job.timingType)}
         </div>
         <Button variant="primary" size="lg" onClick={handleApply}>Ứng Tuyển Ngay</Button>
       </div>
-
-      {/* Quick Apply Modal */}
-      {isApplyModalOpen && (
-        <div className="modal-overlay">
-          <div className="apply-modal animate-fade-in">
-            {!applyComplete ? (
-              <>
-                <div className="modal-header">
-                  <h3>Xác nhận ứng tuyển</h3>
-                  <button className="close-btn" onClick={() => setIsApplyModalOpen(false)}>&times;</button>
-                </div>
-                <div className="modal-body">
-                  <p>Bạn sắp gửi yêu cầu ứng tuyển tới chủ nhà <strong>{jobData.employer.name}</strong> cho công việc:</p>
-                  <div className="modal-job-summary mt-2 mb-4">
-                    <strong>{jobData.title}</strong>
-                    <div>{jobData.schedule.days} | {jobData.schedule.time}</div>
-                  </div>
-                  <p className="text-muted" style={{fontSize: '0.9rem'}}>*Thông tin hồ sơ và số điện thoại của bạn sẽ được gửi tới chủ nhà duyệt.</p>
-                </div>
-                <div className="modal-footer">
-                  <Button variant="ghost" onClick={() => setIsApplyModalOpen(false)}>Hủy</Button>
-                  <Button variant="primary" onClick={submitApplication}>Gửi Ứng Tuyển</Button>
-                </div>
-              </>
-            ) : (
-              <div className="modal-success state-center">
-                <CheckCircle2 size={64} className="text-success mb-2" />
-                <h3>Ứng tuyển thành công!</h3>
-                <p className="text-muted mt-2">Chủ nhà đã nhận được hồ sơ của bạn và sẽ liên hệ sớm nếu phù hợp.</p>
-                <Button variant="primary" className="mt-4" fullWidth onClick={() => setIsApplyModalOpen(false)}>
-                  Đóng & Tiếp tục tìm việc
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
     </div>
   );
 };
