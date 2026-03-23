@@ -10,7 +10,7 @@ const Register = () => {
   const [role, setRole] = useState('employer'); // employer | worker
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({ 
-    fullName: '', phone: '', email: '', password: '', confirmPassword: '' 
+    fullName: '', phone: '', email: '', password: '', confirmPassword: '', gender: 0, dateOfBirth: ''
   });
 
   const handleChange = (e) => {
@@ -21,6 +21,14 @@ const Register = () => {
     e.preventDefault();
     setIsLoading(true);
     // Mock registration logic -> will be connected to Redux
+    const payload = {
+      ...formData,
+      role: role === 'employer' ? 1 : 2, // 1: Employer, 2: Worker depending on enum mapping in backend
+      gender: parseInt(formData.gender),
+      dateOfBirth: formData.dateOfBirth ? new Date(formData.dateOfBirth).toISOString() : null
+    };
+    
+    console.log("Submitting Register Payload:", payload);
     setTimeout(() => {
       setIsLoading(false);
       navigate('/');
@@ -66,6 +74,45 @@ const Register = () => {
           placeholder="0912345678"
           icon={<Phone size={20} />}
           value={formData.phone}
+          onChange={handleChange}
+          required
+        />
+
+        <Input 
+          id="email" 
+          label="Email (Tùy chọn)" 
+          type="email" 
+          placeholder="email@example.com"
+          icon={<Mail size={20} />}
+          value={formData.email}
+          onChange={handleChange}
+        />
+
+        <div className="input-group" style={{ marginBottom: '1.5rem' }}>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Giới tính</label>
+          <select 
+            id="gender" 
+            value={formData.gender} 
+            onChange={handleChange}
+            style={{ 
+              width: '100%', 
+              padding: '0.75rem 1rem', 
+              borderRadius: '8px', 
+              border: '1px solid var(--border)',
+              backgroundColor: 'var(--bg-light)'
+            }}
+          >
+            <option value={0}>Không tiết lộ (Any)</option>
+            <option value={1}>Nam</option>
+            <option value={2}>Nữ</option>
+          </select>
+        </div>
+
+        <Input 
+          id="dateOfBirth" 
+          label="Ngày sinh" 
+          type="date"
+          value={formData.dateOfBirth}
           onChange={handleChange}
           required
         />
