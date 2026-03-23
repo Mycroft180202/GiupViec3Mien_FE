@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { Mail, Lock, User, Phone } from 'lucide-react';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
@@ -12,12 +13,13 @@ const Register = () => {
   const [formData, setFormData] = useState({ 
     fullName: '', phone: '', email: '', password: '', confirmPassword: '', gender: 0, dateOfBirth: ''
   });
+  const [errorMsg, setErrorMsg] = useState('');
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     // Mock registration logic -> will be connected to Redux
@@ -31,14 +33,19 @@ const Register = () => {
     console.log("Submitting Register Payload:", payload);
     setTimeout(() => {
       setIsLoading(false);
-      navigate('/');
-    }, 1500);
+    }
   };
 
   return (
     <>
       <h2 className="auth-title">Đăng ký tài khoản</h2>
       <p className="auth-subtitle">Chọn loại tài khoản phù hợp với nhu cầu của bạn.</p>
+
+      {errorMsg && (
+        <div style={{ padding: '0.75rem', backgroundColor: '#fee2e2', color: '#dc2626', borderRadius: '8px', marginBottom: '1rem', border: '1px solid #fecaca' }}>
+          {errorMsg}
+        </div>
+      )}
 
       {/* Role Selector Tabs */}
       <div className="auth-tabs">

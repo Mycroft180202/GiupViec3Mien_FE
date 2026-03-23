@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import axios from 'axios';
 import { Briefcase, MapPin, CreditCard, CheckCircle2, ArrowRight, ArrowLeft } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
@@ -22,7 +23,9 @@ const JOB_TYPES = [
 
 const CreateJob = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useSelector(state => state.auth);
+  const { isAuthenticated, user, token } = useSelector(state => state.auth);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
   
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -57,17 +60,56 @@ const CreateJob = () => {
     }
   }, [isAuthenticated, user, navigate]);
 
-  const handleSubmit = () => {
-    // Submit logic include user info
-    const finalData = {
-       ...formData,
-       employerId: user?.id,
-       employerName: user?.name,
-       contactPhone: user?.phone
+  const handleSubmit = async () => {
+    if (!formData.jobType) {
+      alert('Vui lòng chọn loại công việc');
+      return;
+    }
+
+    setIsLoading(true);
+    setErrorMsg('');
+
+    // Mapping frontend job types to backend ServiceCategory enum
+    const categoryMap = {
+      'hourly': 0, // Housekeeping
+      'baby': 1,   // Babysitting
+      'elder': 2,  // ElderCare
+      'stay': 4    // GeneralHelper (for live-in)
     };
-    console.log('Publishing Job:', finalData);
-    alert('Đăng tin thành công! Tin của bạn đang được duyệt.');
-    navigate('/');
+
+    // Format payload for CreateJobRequest.cs
+    const payload = {
+      title: formData.title,
+      description: formData.description,
+      location: `${formData.address}, ${formData.district}, ${formData.city}`,
+      price: parseFloat(formData.price || 0),
+      latitude: 0,
+      longitude: 0,
+      serviceCategory: categoryMap[formData.jobType] || 0,
+      postType: 0, // Hiring
+      timingType: formData.jobType === 'stay' ? 0 : 1, // 0=FullTime (ở lại), 1=PartTime (theo giờ)
+      workingTimeDescription: `Bắt đầu: ${formData.date} lúc ${formData.time}`,
+      preferredGender: 0, // Any=0, Male=1, Female=2
+      targetAgeRange: "20-55"
+    };
+
+    try {
+      await axios.post('https://localhost:7004/api/Job', payload, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
+      alert('Đăng tin thành công! Tin của bạn đã được đăng công khai.');
+      navigate('/dashboard/quan-ly-tin'); // Redirect to my jobs
+    } catch (err) {
+      console.error('Job Post Error:', err);
+      const message = err.response?.data?.message || 'Đăng tin thất bại. Vui lòng kiểm tra lại thông tin.';
+      setErrorMsg(message);
+      alert(message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const updateForm = (field, value) => {
@@ -203,6 +245,14 @@ const CreateJob = () => {
       <div className="page-header text-center">
         <h2>Đăng Tin Tìm Người</h2>
         <p className="subtitle">Tiếp cận hàng ngàn người lao động uy tín chỉ trong 3 bước.</p>
+        
+        {errorMsg && (
+          <div className="container mt-2">
+            <div style={{ padding: '0.75rem', backgroundColor: '#fee2e2', color: '#dc2626', borderRadius: '8px', border: '1px solid #fecaca' }}>
+              {errorMsg}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="form-container">
@@ -254,9 +304,10 @@ const CreateJob = () => {
                   variant="primary" 
                   size="lg"
                   onClick={handleSubmit}
+                  disabled={isLoading}
                   className="push-right pulse-btn"
                 >
-                  Xác Nhận & Đăng Tin
+                  {isLoading ? 'Đang xử lý...' : 'Xác Nhận & Đăng Tin'}
                 </Button>
               )}
             </div>

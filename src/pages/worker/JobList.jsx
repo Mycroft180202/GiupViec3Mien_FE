@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, MapPin, Filter, Star, Clock, Briefcase } from 'lucide-react';
+import axios from 'axios';
+import { Search, MapPin, Filter, Star, Clock, Briefcase, Loader2, AlertCircle } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Card, { CardBody } from '../../components/ui/Card';
@@ -18,6 +19,62 @@ const MOCK_JOBS = [
 const JobList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+  const [jobs, setJobs] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const fetchJobs = async () => {
+    setIsLoading(true);
+    setErrorMsg('');
+    try {
+      const response = await axios.get('https://localhost:7004/api/Job/available');
+      setJobs(response.data);
+    } catch (err) {
+      console.error('Fetch Jobs Error:', err);
+      setErrorMsg('Không thể tải danh sách công việc. Vui lòng thử lại sau.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchJobs();
+  }, []);
+
+  const getCategoryLabel = (cat) => {
+    const labels = {
+      0: 'Giúp việc nhà',
+      1: 'Trông trẻ',
+      2: 'Chăm sóc người già',
+      3: 'Nấu ăn',
+      4: 'Tạp vụ',
+      'Housekeeping': 'Giúp việc nhà',
+      'Babysitting': 'Trông trẻ',
+      'ElderCare': 'Chăm sóc người già'
+    };
+    return labels[cat] || 'Khác';
+  };
+
+  const getTimingLabel = (timing) => {
+    const labels = {
+      0: '/ tháng', // FullTime (thường cho ở lại hoặc fulltime)
+      1: '/ giờ',   // PartTime
+      2: '/ buổi',  // Scheduled
+      'FullTime': '/ tháng',
+      'PartTime': '/ giờ'
+    };
+    return labels[timing] || '/ lượt';
+  };
+
+  const formatPostedAt = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) return 'Vừa xong';
+    if (diffInHours < 24) return `${diffInHours} giờ trước`;
+    return `${Math.floor(diffInHours / 24)} ngày trước`;
+  };
 
   return (
     <div className="job-list-page container">
@@ -89,7 +146,7 @@ const JobList = () => {
         {/* Main Job List */}
         <main className="job-results-main">
           <div className="results-header">
-            <p className="results-count">Tìm thấy <strong>{MOCK_JOBS.length}</strong> công việc phù hợp</p>
+            <p className="results-count">Tìm thấy <strong>{jobs.length}</strong> công việc phù hợp</p>
             <div className="sort-wrapper">
               <span>Sắp xếp:</span>
               <select className="filter-select sort-select">
@@ -101,34 +158,55 @@ const JobList = () => {
           </div>
 
           <div className="jobs-vertical-list">
-            {MOCK_JOBS.map((job) => (
-              <Card key={job.id} hoverable className="job-list-card">
-                <CardBody className="job-list-card-body">
-                  <div className="job-list-info">
-                    {job.urgent && <span className="badge-urgent">Tuyển gấp</span>}
-                    <Link to={`/viec-lam/${job.id}`} className="job-link">
-                      <h3 className="job-list-title">{job.title}</h3>
-                    </Link>
-                    
-                    <div className="job-list-meta">
-                      <span className="meta-item"><Briefcase size={16}/> {job.type}</span>
-                      <span className="meta-item"><MapPin size={16}/> {job.location}</span>
-                      <span className="meta-item"><Clock size={16}/> {job.postedAt}</span>
+            {isLoading ? (
+               <div style={{ textAlign: 'center', padding: '4rem 0', gridColumn: '1/-1' }}>
+                 <Loader2 className="animate-spin" size={40} style={{ color: 'var(--primary-color)', margin: '0 auto 1.5rem' }} />
+                 <p style={{ color: 'var(--text-muted)' }}>Đang tìm kiếm công việc tốt nhất cho bạn...</p>
+               </div>
+            ) : errorMsg ? (
+               <div style={{ textAlign: 'center', padding: '3rem', backgroundColor: '#fff', borderRadius: '12px', color: '#dc2626', gridColumn: '1/-1' }}>
+                 <AlertCircle size={40} style={{ marginBottom: '1rem' }} />
+                 <p>{errorMsg}</p>
+                 <Button variant="outline" size="sm" onClick={fetchJobs} style={{ marginTop: '1rem' }}>Thử lại</Button>
+               </div>
+            ) : jobs.length === 0 ? (
+               <div style={{ textAlign: 'center', padding: '4rem', backgroundColor: '#fff', borderRadius: '12px', border: '2px dashed #e2e8f0', gridColumn: '1/-1' }}>
+                 <Briefcase size={48} style={{ color: '#cbd5e1', marginBottom: '1.5rem', display: 'block', margin: '0 auto 1.5rem' }} />
+                 <h3 style={{ color: 'var(--text-main)', marginBottom: '0.5rem' }}>Không tìm thấy công việc nào</h3>
+                 <p style={{ color: 'var(--text-muted)' }}>Có vẻ như hiện tại chưa có tin đăng nào phù hợp. Bạn hãy quay lại sau nhé!</p>
+               </div>
+            ) : (
+              jobs.map((job) => (
+                <Card key={job.id} hoverable className="job-list-card">
+                  <CardBody className="job-list-card-body">
+                    <div className="job-list-info">
+                      {(job.price > 100000 && job.timingType === 1) && <span className="badge-urgent">Lương cao</span>}
+                      <Link to={`/viec-lam/${job.id}`} className="job-link">
+                        <h3 className="job-list-title">{job.title}</h3>
+                      </Link>
+                      
+                      <div className="job-list-meta">
+                        <span className="meta-item"><Briefcase size={16}/> {getCategoryLabel(job.serviceCategory)}</span>
+                        <span className="meta-item"><MapPin size={16}/> {job.location}</span>
+                        <span className="meta-item"><Clock size={16}/> {formatPostedAt(job.createdAt)}</span>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="job-list-action-area">
-                    <div className="job-list-price">
-                      {job.price.toLocaleString()}đ <span className="price-unit">{job.timeUnit}</span>
+                    <div className="job-list-action-area">
+                      <div className="job-list-price">
+                        {Number(job.price).toLocaleString()}đ <span className="price-unit">{getTimingLabel(job.timingType)}</span>
+                      </div>
+                      <Link to={`/viec-lam/${job.id}`} className="w-full">
+                        <Button variant="outline" fullWidth>Xem Chi Tiết</Button>
+                      </Link>
+                      <Link to={`/viec-lam/${job.id}/apply`} className="w-full">
+                        <Button variant="primary" fullWidth>Ứng Tuyển</Button>
+                      </Link>
                     </div>
-                    <Link to={`/viec-lam/${job.id}`} className="w-full">
-                      <Button variant="outline" fullWidth>Xem Chi Tiết</Button>
-                    </Link>
-                    <Button variant="primary" fullWidth>Ứng Tuyển</Button>
-                  </div>
-                </CardBody>
-              </Card>
-            ))}
+                  </CardBody>
+                </Card>
+              ))
+            )}
           </div>
           
           <div className="pagination">

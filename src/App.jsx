@@ -11,6 +11,8 @@ import WorkerList from './pages/employer/WorkerList';
 import WorkerDetail from './pages/employer/WorkerDetail';
 import JobList from './pages/worker/JobList';
 import JobDetail from './pages/worker/JobDetail';
+import JobApply from './pages/worker/JobApply';
+import JobApplicants from './pages/employer/JobApplicants';
 import FeaturedServices from './pages/FeaturedServices';
 import Handbook from './pages/Handbook';
 import UserProfile from './pages/profile/UserProfile';
@@ -41,6 +43,8 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/tim-viec" element={<JobList />} />
           <Route path="/viec-lam/:id" element={<JobDetail />} />
+          <Route path="/ung-tuyen-viec-lam/:jobId" element={<JobApplicants />} />
+          <Route path="/viec-lam/:id/apply" element={<JobApply />} />
           <Route path="/tim-giup-viec" element={<WorkerList />} />
           <Route path="/ung-vien/:id" element={<WorkerDetail />} />
           <Route path="/dang-tin" element={<CreateJob />} />
