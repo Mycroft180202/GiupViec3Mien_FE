@@ -20,14 +20,26 @@ const JobList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [jobs, setJobs] = useState([]);
+  const [location, setLocation] = useState('Toàn quốc');
+  const [category, setCategory] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
 
-  const fetchJobs = async () => {
+  const fetchJobs = async (keyword = '', loc = '', cat = null) => {
     setIsLoading(true);
     setErrorMsg('');
     try {
-      const response = await axios.get('https://localhost:7004/api/Job/available');
+      const params = new URLSearchParams();
+      if (keyword) params.append('Keyword', keyword);
+      if (cat !== null) params.append('Category', cat);
+
+      
+      const locationToSearch = loc || location;
+      if (locationToSearch && locationToSearch !== 'Toàn quốc') {
+        params.append('Location', locationToSearch);
+      }
+      
+      const response = await axios.get(`https://localhost:7004/api/Job/search?${params.toString()}`);
       setJobs(response.data);
     } catch (err) {
       console.error('Fetch Jobs Error:', err);
@@ -37,9 +49,11 @@ const JobList = () => {
     }
   };
 
+
   useEffect(() => {
     fetchJobs();
   }, []);
+
 
   const getCategoryLabel = (cat) => {
     const labels = {
@@ -89,7 +103,8 @@ const JobList = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="main-search-input"
           />
-          <Button variant="primary" className="search-submit-btn">Tìm Kiếm</Button>
+          <Button variant="primary" className="search-submit-btn" onClick={() => fetchJobs(searchTerm)}>Tìm Kiếm</Button>
+
           
           <Button 
             variant="outline" 
@@ -112,23 +127,29 @@ const JobList = () => {
           <div className="filter-section">
             <h4 className="filter-title">Loại Công Việc</h4>
             <div className="filter-options">
-              <label className="checkbox-label"><input type="checkbox" /> Tất cả</label>
-              <label className="checkbox-label"><input type="checkbox" /> Giúp việc theo giờ</label>
-              <label className="checkbox-label"><input type="checkbox" /> Giúp việc ở lại</label>
-              <label className="checkbox-label"><input type="checkbox" /> Chăm sóc người già</label>
-              <label className="checkbox-label"><input type="checkbox" /> Chăm sóc trẻ em</label>
+              <label className="checkbox-label"><input type="radio" name="cat" defaultChecked onChange={() => setCategory(null)} /> Tất cả</label>
+              <label className="checkbox-label"><input type="radio" name="cat" onChange={() => setCategory(0)} /> Giúp việc nhà</label>
+              <label className="checkbox-label"><input type="radio" name="cat" onChange={() => setCategory(1)} /> Trông trẻ</label>
+              <label className="checkbox-label"><input type="radio" name="cat" onChange={() => setCategory(2)} /> Chăm sóc người già</label>
+              <label className="checkbox-label"><input type="radio" name="cat" onChange={() => setCategory(3)} /> Nấu ăn</label>
             </div>
           </div>
 
+
           <div className="filter-section">
             <h4 className="filter-title">Khu vực</h4>
-            <select className="filter-select">
-              <option>Toàn quốc</option>
-              <option>Hà Nội</option>
-              <option>Hồ Chí Minh</option>
-              <option>Đà Nẵng</option>
+            <select 
+              className="filter-select"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+            >
+              <option value="Toàn quốc">Toàn quốc</option>
+              <option value="Hà Nội">Hà Nội</option>
+              <option value="Hồ Chí Minh">Hồ Chí Minh</option>
+              <option value="Đà Nẵng">Đà Nẵng</option>
             </select>
           </div>
+
 
           <div className="filter-section">
             <h4 className="filter-title">Mức lương</h4>
@@ -140,7 +161,16 @@ const JobList = () => {
             </div>
           </div>
 
-          <Button variant="primary" fullWidth className="apply-filter-btn">Áp dụng bộ lọc</Button>
+          <Button 
+            variant="primary" 
+            fullWidth 
+            className="apply-filter-btn"
+            onClick={() => fetchJobs(searchTerm, location, category)}
+          >
+            Áp dụng bộ lọc
+          </Button>
+
+
         </aside>
 
         {/* Main Job List */}
