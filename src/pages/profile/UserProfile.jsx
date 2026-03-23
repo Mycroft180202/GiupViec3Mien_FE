@@ -20,8 +20,11 @@ const UserProfile = () => {
     experienceYears: 0,
     hourlyRate: 0,
     gender: '0',
-    dateOfBirth: ''
+    dateOfBirth: '',
+    latitude: 1,
+    longitude: 1
   });
+
 
   const fetchProfile = async () => {
     setIsLoading(true);
@@ -30,6 +33,7 @@ const UserProfile = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = response.data;
+      const genderMapRecv = { "Any": "0", "Male": "1", "Female": "2" };
       setFormData({
         name: data.fullName || '',
         phone: data.phone || '',
@@ -38,9 +42,13 @@ const UserProfile = () => {
         bio: data.workerProfile?.bio || '',
         experienceYears: data.workerProfile?.experienceYears || 0,
         hourlyRate: data.workerProfile?.hourlyRate || 0,
-        gender: data.gender !== undefined ? data.gender.toString() : '0',
-        dateOfBirth: data.dateOfBirth ? data.dateOfBirth.split('T')[0] : ''
+        gender: genderMapRecv[data.gender] || '0',
+        dateOfBirth: data.dateOfBirth ? data.dateOfBirth.split('T')[0] : '',
+        latitude: data.latitude || 1,
+        longitude: data.longitude || 1
       });
+
+
     } catch (err) {
       setErrorMsg('Không thể tải thông tin cá nhân.');
     } finally {
@@ -70,9 +78,12 @@ const UserProfile = () => {
         hourlyRate: Number(formData.hourlyRate),
         gender: Number(formData.gender),
         dateOfBirth: formData.dateOfBirth || null,
-        latitude: 0,
-        longitude: 0
+        latitude: Number(formData.latitude) || 1,
+        longitude: Number(formData.longitude) || 1,
+        additionalInfo: formData.address
       };
+
+
       
       await axios.post('https://localhost:7004/api/User/profile', payload, {
         headers: { Authorization: `Bearer ${token}` }
@@ -156,7 +167,7 @@ const UserProfile = () => {
             </select>
           </div>
 
-          <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
              <Input 
                 id="address" 
                 label="Địa chỉ hiện tại" 
@@ -164,7 +175,24 @@ const UserProfile = () => {
                 value={formData.address}
                 onChange={handleChange}
               />
+              <Input 
+                id="latitude" 
+                label="Vĩ độ" 
+                type="number"
+                step="0.000001"
+                value={formData.latitude}
+                onChange={handleChange}
+              />
+              <Input 
+                id="longitude" 
+                label="Kinh độ" 
+                type="number"
+                step="0.000001"
+                value={formData.longitude}
+                onChange={handleChange}
+              />
           </div>
+
 
           {user?.role === 'worker' && (
             <>
