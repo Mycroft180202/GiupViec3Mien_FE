@@ -22,27 +22,25 @@ const JobList = () => {
     setErrorMsg('');
     try {
       const params = new URLSearchParams();
-      // Ensure PostType=Hiring (0) for finding jobs, or omit if you want both
-      // For tim-viec, usually only hiring jobs. The backend might default this.
+      // PostType=Hiring (0) for finding jobs posted by employers
       params.append('PostType', '0'); 
       
       if (keyword) params.append('Keyword', keyword);
       if (cat !== null) params.append('Category', cat);
       if (loc && loc !== 'Toàn quốc') params.append('Location', loc);
 
-      // Salary Filter Mapping
       if (salary === 'range1') {
         params.append('MinPrice', '50000');
         params.append('MaxPrice', '100000');
-        params.append('Timing', '1'); // PartTime
+        params.append('Timing', '1');
       } else if (salary === 'range2') {
         params.append('MinPrice', '100001');
-        params.append('Timing', '1'); // PartTime
+        params.append('Timing', '1');
       } else if (salary === 'monthly') {
-        params.append('Timing', '0'); // FullTime
+        params.append('Timing', '0');
       }
 
-      const response = await axios.get(`https://localhost:7004/api/Job/search?${params.toString()}`);
+      const response = await axios.get(`http://localhost:5275/api/Job/search?${params.toString()}`);
       setJobs(response.data);
     } catch (err) {
       console.error('Fetch Jobs Error:', err);
@@ -101,18 +99,13 @@ const JobList = () => {
             className="main-search-input"
           />
           <Button variant="primary" className="search-submit-btn" onClick={() => fetchJobs()}>Tìm Kiếm</Button>
-          <Button 
-            variant="outline" 
-            className="mobile-filter-btn"
-            onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}
-          >
+          <button className="mobile-filter-btn" onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}>
             <Filter size={20} /> Lọc
-          </Button>
+          </button>
         </div>
       </div>
 
       <div className="job-list-layout">
-        {/* Filters Sidebar */}
         <aside className={`job-filters-sidebar ${isMobileFilterOpen ? 'open' : ''}`}>
           <div className="filter-header-mobile">
             <h3>Bộ lọc tìm kiếm</h3>
@@ -145,8 +138,6 @@ const JobList = () => {
               <option value="Hà Nội">Hà Nội</option>
               <option value="Hồ Chí Minh">Hồ Chí Minh</option>
               <option value="Đà Nẵng">Đà Nẵng</option>
-              <option value="Cần Thơ">Cần Thơ</option>
-              <option value="Hải Phòng">Hải Phòng</option>
             </select>
           </div>
 
@@ -176,17 +167,16 @@ const JobList = () => {
           </Button>
         </aside>
 
-        {/* Results List */}
         <main className="job-results-main">
           <div className="results-header">
-            <p className="results-count">Tìm thấy <strong>{jobs.length}</strong> công việc</p>
+            <p className="results-count">Tìm thấy <strong>{jobs.length}</strong> công việc phù hợp</p>
           </div>
 
           <div className="jobs-vertical-list">
             {isLoading ? (
               <div className="loading-state">
                 <Loader2 className="animate-spin" size={40} />
-                <p>Đang tìm kiếm công việc tốt nhất...</p>
+                <p>Đang tải danh sách công việc...</p>
               </div>
             ) : errorMsg ? (
               <div className="error-state">
