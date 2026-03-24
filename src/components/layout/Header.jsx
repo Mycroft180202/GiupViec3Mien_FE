@@ -9,9 +9,9 @@ import { logout } from '../../redux/slices/authSlice';
 import Button from '../ui/Button';
 import './Header.css';
 
-const apiBaseUrl = 'https://localhost:7004';
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7004';
 
-const formatNotificationTime = isoDate => {
+const formatNotificationTime = (isoDate) => {
   if (!isoDate) return '';
 
   const diffMs = Date.now() - new Date(isoDate).getTime();
@@ -23,7 +23,7 @@ const formatNotificationTime = isoDate => {
 };
 
 const Header = () => {
-  const { isAuthenticated, token, user } = useSelector(state => state.auth);
+  const { isAuthenticated, token, user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -34,7 +34,6 @@ const Header = () => {
   const notificationPanelRef = useRef(null);
 
   const displayName = user?.fullName || user?.name || 'Tài khoản';
-
   const hasNotifications = useMemo(() => notifications.length > 0, [notifications]);
 
   const loadNotifications = async () => {
@@ -48,8 +47,8 @@ const Header = () => {
 
       setNotifications(response.data?.items || []);
       setUnreadCount(response.data?.unreadCount || 0);
-    } catch (err) {
-      console.error('Load notifications error:', err);
+    } catch (error) {
+      console.error('Load notifications error:', error);
     } finally {
       setIsLoadingNotifications(false);
     }
@@ -72,13 +71,13 @@ const Header = () => {
       .configureLogging(LogLevel.Warning)
       .build();
 
-    connection.on('NotificationReceived', notification => {
-      setNotifications(prev => [notification, ...prev].slice(0, 12));
-      setUnreadCount(prev => prev + 1);
+    connection.on('NotificationReceived', (notification) => {
+      setNotifications((prev) => [notification, ...prev].slice(0, 12));
+      setUnreadCount((prev) => prev + 1);
       toast(notification.title || 'Bạn có thông báo mới.');
     });
 
-    connection.start().catch(error => {
+    connection.start().catch((error) => {
       console.error('SignalR notification connection error:', error);
     });
 
@@ -88,7 +87,7 @@ const Header = () => {
   }, [isAuthenticated, token]);
 
   useEffect(() => {
-    const handleClickOutside = event => {
+    const handleClickOutside = (event) => {
       if (notificationPanelRef.current && !notificationPanelRef.current.contains(event.target)) {
         setIsNotificationOpen(false);
       }
@@ -115,14 +114,14 @@ const Header = () => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setUnreadCount(0);
-        setNotifications(prev => prev.map(item => ({ ...item, isRead: true })));
-      } catch (err) {
-        console.error('Mark all notifications as read error:', err);
+        setNotifications((prev) => prev.map((item) => ({ ...item, isRead: true })));
+      } catch (error) {
+        console.error('Mark all notifications as read error:', error);
       }
     }
   };
 
-  const handleNotificationClick = async notification => {
+  const handleNotificationClick = async (notification) => {
     setIsNotificationOpen(false);
 
     if (!notification.isRead) {
@@ -132,13 +131,13 @@ const Header = () => {
           {},
           { headers: { Authorization: `Bearer ${token}` } }
         );
-      } catch (err) {
-        console.error('Mark notification as read error:', err);
+      } catch (error) {
+        console.error('Mark notification as read error:', error);
       }
     }
 
-    setNotifications(prev =>
-      prev.map(item => (item.id === notification.id ? { ...item, isRead: true } : item))
+    setNotifications((prev) =>
+      prev.map((item) => (item.id === notification.id ? { ...item, isRead: true } : item))
     );
 
     if (notification.link) {
@@ -161,11 +160,19 @@ const Header = () => {
 
         <nav className={`main-nav desktop-nav ${isMenuOpen ? 'open' : ''}`} style={{ display: 'flex', gap: '1.5rem' }}>
           {user?.role !== 'worker' && (
-            <Link to="/tim-giup-viec" onClick={() => setIsMenuOpen(false)} className="nav-link">Tìm người giúp việc</Link>
+            <Link to="/tim-giup-viec" onClick={() => setIsMenuOpen(false)} className="nav-link">
+              Tìm người giúp việc
+            </Link>
           )}
-          <Link to="/tim-viec" onClick={() => setIsMenuOpen(false)} className="nav-link">Tìm việc làm</Link>
-          <Link to="/dich-vu-noi-bat" onClick={() => setIsMenuOpen(false)} className="nav-link">Dịch vụ nổi bật</Link>
-          <Link to="/cam-nang" onClick={() => setIsMenuOpen(false)} className="nav-link">Cẩm nang</Link>
+          <Link to="/tim-viec" onClick={() => setIsMenuOpen(false)} className="nav-link">
+            Tìm việc làm
+          </Link>
+          <Link to="/dich-vu-noi-bat" onClick={() => setIsMenuOpen(false)} className="nav-link">
+            Dịch vụ nổi bật
+          </Link>
+          <Link to="/cam-nang" onClick={() => setIsMenuOpen(false)} className="nav-link">
+            Cẩm nang
+          </Link>
         </nav>
 
         <div className="header-actions">
@@ -173,7 +180,9 @@ const Header = () => {
             <div className="notification-wrapper" ref={notificationPanelRef}>
               <button className="icon-btn notification-btn" aria-label="Thông báo" onClick={handleBellClick}>
                 <Bell size={20} />
-                {unreadCount > 0 && <span className="notification-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>}
+                {unreadCount > 0 && (
+                  <span className="notification-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>
+                )}
               </button>
 
               {isNotificationOpen && (
@@ -188,7 +197,7 @@ const Header = () => {
                     <div className="notification-empty">Chưa có thông báo nào.</div>
                   ) : (
                     <div className="notification-list">
-                      {notifications.map(notification => (
+                      {notifications.map((notification) => (
                         <button
                           key={notification.id}
                           type="button"
@@ -226,7 +235,9 @@ const Header = () => {
               </button>
               {user?.role === 'employer' && (
                 <Link to="/dang-tin" style={{ textDecoration: 'none' }}>
-                  <Button variant="primary" className="post-job-btn">Đăng tin ngay</Button>
+                  <Button variant="primary" className="post-job-btn">
+                    Đăng tin ngay
+                  </Button>
                 </Link>
               )}
             </>
@@ -235,11 +246,15 @@ const Header = () => {
               <Link to="/dang-nhap" style={{ textDecoration: 'none' }}>
                 <div className="user-menu">
                   <UserCircle size={28} className="user-icon" />
-                  <span className="user-name" style={{ color: 'var(--text-main)' }}>Đăng nhập</span>
+                  <span className="user-name" style={{ color: 'var(--text-main)' }}>
+                    Đăng nhập
+                  </span>
                 </div>
               </Link>
               <Link to="/dang-ky" style={{ textDecoration: 'none' }}>
-                <Button variant="outline" className="post-job-btn">Đăng ký</Button>
+                <Button variant="outline" className="post-job-btn">
+                  Đăng ký
+                </Button>
               </Link>
             </>
           )}

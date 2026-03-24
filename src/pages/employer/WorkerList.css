@@ -163,6 +163,33 @@
   margin-bottom: 1.5rem;
 }
 
+.worker-empty-state {
+  padding: 2rem;
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  text-align: center;
+  margin-bottom: 1.25rem;
+}
+
+.filter-section {
+  margin-bottom: 1.25rem;
+}
+
+.filter-title {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.95rem;
+}
+
+.close-filter-btn {
+  border: none;
+  background: transparent;
+  font-size: 1.75rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
 /* Responsive adjustments */
 @media (max-width: 900px) {
   .worker-search-bar {

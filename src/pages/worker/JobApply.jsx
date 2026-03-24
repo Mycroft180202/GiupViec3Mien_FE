@@ -2,9 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import {
   AlertCircle,
   ArrowLeft,
+  CalendarDays,
   CheckCircle2,
   DollarSign,
   FileText,
@@ -16,6 +18,9 @@ import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Card, { CardBody } from '../../components/ui/Card';
 import { getApiErrorMessage } from '../../utils/api';
+
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7004';
+const today = new Date().toISOString().split('T')[0];
 
 const JobApply = () => {
   const { id } = useParams();
@@ -31,29 +36,34 @@ const JobApply = () => {
   const [formData, setFormData] = useState({
     message: '',
     bidPrice: 0,
+    availableStartDate: '',
     cv: null,
   });
 
   useEffect(() => {
     if (!isAuthenticated) {
-      alert('Vui lòng đăng nhập bằng tài khoản người tìm việc để ứng tuyển.');
+      toast.error('Vui lòng đăng nhập bằng tài khoản người tìm việc để ứng tuyển.');
       navigate('/dang-nhap');
       return;
     }
 
     if (user?.role === 'employer') {
-      alert('Tài khoản chủ thuê không thể ứng tuyển. Vui lòng dùng tài khoản người tìm việc.');
+      toast.error('Tài khoản chủ thuê không thể ứng tuyển. Vui lòng dùng tài khoản người tìm việc.');
       navigate('/');
       return;
     }
 
     const fetchJob = async () => {
       try {
-        const response = await axios.get(`https://localhost:7004/api/Job/${id}`);
+        const response = await axios.get(`${apiBaseUrl}/api/Job/${id}`);
         setJob(response.data);
-        setFormData(prev => ({ ...prev, bidPrice: response.data.price || 0 }));
+        setFormData(prev => ({
+          ...prev,
+          bidPrice: response.data.price || 0,
+          availableStartDate: response.data.workDate ? String(response.data.workDate).slice(0, 10) : '',
+        }));
       } catch (err) {
-        alert('Không tìm thấy thông tin công việc.');
+        toast.error('Không tìm thấy thông tin công việc.');
         navigate('/tim-viec');
       } finally {
         setIsLoadingJob(false);
@@ -64,12 +74,12 @@ const JobApply = () => {
   }, [id, isAuthenticated, navigate, user]);
 
   const handleChange = event => {
-    const { id: fieldId, value } = event.target;
+    const { name, value } = event.target;
     setFormData(prev => ({
       ...prev,
-      [fieldId]: fieldId === 'bidPrice' ? Number(value) : value,
+      [name]: name === 'bidPrice' ? Number(value) : value,
     }));
-    setFieldErrors(prev => ({ ...prev, [fieldId]: '' }));
+    setFieldErrors(prev => ({ ...prev, [name]: '' }));
   };
 
   const handleFileChange = event => {
@@ -89,6 +99,14 @@ const JobApply = () => {
       nextErrors.bidPrice = 'Mức lương mong muốn phải lớn hơn 0.';
     }
 
+    if (!formData.availableStartDate) {
+      nextErrors.availableStartDate = 'Vui lòng chọn ngày bạn có thể bắt đầu làm.';
+    } else if (formData.availableStartDate < today) {
+      nextErrors.availableStartDate = 'Ngày bắt đầu làm không được ở quá khứ.';
+    } else if (job?.workDate && formData.availableStartDate > String(job.workDate).slice(0, 10)) {
+      nextErrors.availableStartDate = 'Ngày bạn có thể bắt đầu làm đang muộn hơn lịch mà chủ nhà yêu cầu.';
+    }
+
     if (formData.cv) {
       const allowedExtensions = ['.pdf', '.doc', '.docx', '.txt'];
       const fileName = formData.cv.name.toLowerCase();
@@ -106,26 +124,26 @@ const JobApply = () => {
     event.preventDefault();
     setErrorHeader('');
 
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     setIsSubmitting(true);
 
     const submitData = new FormData();
     submitData.append('Message', formData.message.trim());
     submitData.append('BidPrice', String(formData.bidPrice));
+    submitData.append('AvailableStartDate', formData.availableStartDate);
     if (formData.cv) {
       submitData.append('Cv', formData.cv);
     }
 
     try {
-      await axios.post(`https://localhost:7004/api/Job/${id}/apply`, submitData, {
+      await axios.post(`${apiBaseUrl}/api/Job/${id}/apply`, submitData, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
       setSuccess(true);
+      toast.success('Ứng tuyển thành công!');
     } catch (err) {
       setErrorHeader(getApiErrorMessage(err, 'Gửi ứng tuyển thất bại. Vui lòng thử lại sau.'));
     } finally {
@@ -173,7 +191,7 @@ const JobApply = () => {
 
       <h1 style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>Gửi hồ sơ ứng tuyển</h1>
       <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>
-        Điền thông tin giới thiệu và mức lương mong muốn để chủ nhà dễ dàng cân nhắc hồ sơ của bạn.
+        Điền thông tin giới thiệu, ngày có thể bắt đầu làm và mức lương mong muốn để chủ nhà dễ dàng cân nhắc hồ sơ của bạn.
       </p>
 
       <Card style={{ marginBottom: '2rem', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc' }}>
@@ -182,9 +200,14 @@ const JobApply = () => {
             <FileText size={18} className="text-primary" /> Công việc đang ứng tuyển
           </h3>
           <p style={{ fontWeight: 600, fontSize: '1.1rem', color: 'var(--text-main)', marginBottom: '0.35rem' }}>{job?.title}</p>
-          <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+          <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>
             Chủ nhà: {job?.employerName} | Lương đề xuất: {Number(job?.price || 0).toLocaleString()}đ
           </p>
+          {(job?.workDate || job?.workStartTime || job?.workEndTime) && (
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+              Lịch dự kiến: {job?.workDate ? String(job.workDate).slice(0, 10) : 'Chưa rõ'} {job?.workStartTime && job?.workEndTime ? `| ${job.workStartTime} - ${job.workEndTime}` : ''}
+            </p>
+          )}
         </CardBody>
       </Card>
 
@@ -212,7 +235,7 @@ const JobApply = () => {
           <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.5rem' }}>Mức lương mong muốn (VNĐ)</label>
           <div style={{ position: 'relative' }}>
             <Input
-              id="bidPrice"
+              name="bidPrice"
               type="number"
               value={formData.bidPrice}
               onChange={handleChange}
@@ -229,9 +252,25 @@ const JobApply = () => {
         </div>
 
         <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+          <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.5rem' }}>Ngày bạn có thể bắt đầu làm</label>
+          <div style={{ position: 'relative' }}>
+            <Input
+              name="availableStartDate"
+              type="date"
+              min={today}
+              value={formData.availableStartDate}
+              onChange={handleChange}
+              style={{ paddingLeft: '2.5rem' }}
+              error={fieldErrors.availableStartDate}
+            />
+            <CalendarDays size={20} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+          </div>
+        </div>
+
+        <div className="form-group" style={{ marginBottom: '1.5rem' }}>
           <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.5rem' }}>Lời giới thiệu gửi tới chủ nhà</label>
           <textarea
-            id="message"
+            name="message"
             style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: fieldErrors.message ? '1px solid #dc2626' : '1px solid #e2e8f0', minHeight: '150px', outline: 'none' }}
             placeholder="Ví dụ: Chào chị, em đã có 2 năm kinh nghiệm giúp việc tại chung cư, làm việc cẩn thận, sạch sẽ..."
             value={formData.message}
