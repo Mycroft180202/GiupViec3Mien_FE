@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import MainLayout from './components/layout/MainLayout';
 import AuthLayout from './pages/auth/AuthLayout';
 import DashboardLayout from './components/layout/DashboardLayout';
@@ -37,6 +38,7 @@ function App() {
   
   return (
     <BrowserRouter basename={routerBasename}>
+      <Toaster position="top-right" />
       <Routes>
         {/* Main Public Routes */}
         <Route element={<MainLayout />}>

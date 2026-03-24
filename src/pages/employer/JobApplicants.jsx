@@ -1,200 +1,531 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
-import { User, CheckCircle2, XCircle, Mail, Phone, ArrowLeft, Loader2, AlertCircle, FileText, Star, ShieldCheck } from 'lucide-react';
+import toast from 'react-hot-toast';
+import {
+  AlertCircle,
+  ArrowLeft,
+  BadgeCheck,
+  CheckCircle2,
+  FileText,
+  Loader2,
+  Mail,
+  MapPin,
+  Phone,
+  ShieldCheck,
+  Sparkles,
+  Star,
+  User,
+  XCircle,
+} from 'lucide-react';
 import Card, { CardBody } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
+import { getApiErrorMessage } from '../../utils/api';
+
+const badgeStyle = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '0.35rem',
+  padding: '0.3rem 0.7rem',
+  borderRadius: '999px',
+  fontSize: '0.8rem',
+  fontWeight: 600,
+  background: 'rgba(47, 128, 237, 0.08)',
+  color: 'var(--primary-color)',
+};
+
+const pageUrl = 'https://localhost:7004';
 
 const JobApplicants = () => {
   const { jobId } = useParams();
   const navigate = useNavigate();
   const { token, user } = useSelector(state => state.auth);
-  
-  const [apps, setApps] = useState([]);
+
   const [job, setJob] = useState(null);
+  const [apps, setApps] = useState([]);
+  const [matches, setMatches] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [errorMsg, setErrorMsg] = useState('');
+  const [isMatchLoading, setIsMatchLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [openingCvId, setOpeningCvId] = useState(null);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [matchError, setMatchError] = useState('');
+  const [confirmAction, setConfirmAction] = useState(null);
+
+  const formatMoney = value => `${Number(value || 0).toLocaleString('vi-VN')}đ`;
 
   const fetchData = async () => {
     setIsLoading(true);
+    setIsMatchLoading(true);
     setErrorMsg('');
-    try {
-      // 1. Fetch Job info (to get title etc)
-      const jobRes = await axios.get(`https://localhost:7004/api/Job/${jobId}`);
-      setJob(jobRes.data);
+    setMatchError('');
 
-      // 2. Fetch Applicants
-      const appsRes = await axios.get(`https://localhost:7004/api/Job/${jobId}/applicants`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+    try {
+      const [jobRes, appsRes] = await Promise.all([
+        axios.get(`${pageUrl}/api/Job/${jobId}`),
+        axios.get(`${pageUrl}/api/Job/${jobId}/applicants`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
+
+      setJob(jobRes.data);
       setApps(appsRes.data);
     } catch (err) {
-      console.error('Fetch Applicants Error:', err);
-      setErrorMsg('Không thể tải danh sách ứng viên. Hãy đảm bảo bạn có quyền xem danh sách này.');
+      console.error('Fetch applicants error:', err);
+      setErrorMsg(getApiErrorMessage(err, 'Không thể tải danh sách ứng viên cho tin đăng này.'));
     } finally {
       setIsLoading(false);
+    }
+
+    try {
+      const matchingRes = await axios.get(`${pageUrl}/api/Matching/jobs/${jobId}/workers?limit=6`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setMatches(matchingRes.data);
+    } catch (err) {
+      console.error('Fetch matching error:', err);
+      setMatchError(getApiErrorMessage(err, 'Chưa thể tải gợi ý ứng viên phù hợp.'));
+    } finally {
+      setIsMatchLoading(false);
     }
   };
 
   useEffect(() => {
-    if (token) fetchData();
+    if (token) {
+      fetchData();
+    }
   }, [jobId, token]);
 
-  const handleAccept = async (appId) => {
-    if (!window.confirm('Xác nhận nhận người này làm việc? Việc nhận một người sẽ tự động đóng tin đăng tuyển này.')) return;
-    
+  const runAccept = async applicationId => {
     setIsProcessing(true);
     try {
-      // POST /api/Job/applications/{id}/accept
-      await axios.post(`https://localhost:7004/api/Job/applications/${appId}/accept`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      // Refresh list or mark as accepted locally
-      alert('Đã chấp nhận ứng viên thành công!');
-      fetchData();
+      await axios.post(
+        `${pageUrl}/api/Job/applications/${applicationId}/accept`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success('Đã nhận ứng viên thành công.');
+      await fetchData();
     } catch (err) {
-      alert(err.response?.data?.message || 'Chấp nhận thất bại. Vui lòng thử lại.');
+      toast.error(getApiErrorMessage(err, 'Nhận ứng viên thất bại.'));
     } finally {
       setIsProcessing(false);
+      setConfirmAction(null);
     }
   };
 
-  if (isLoading) return (
-    <div className="state-center container" style={{ padding: '8rem 0' }}>
-      <Loader2 className="animate-spin text-primary" size={48} style={{ marginBottom: '1rem' }} />
-      <p>Đang tải danh sách hồ sơ ứng tuyển...</p>
-    </div>
-  );
+  const runReject = async applicationId => {
+    setIsProcessing(true);
+    try {
+      await axios.post(
+        `${pageUrl}/api/Job/applications/${applicationId}/reject`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setApps(prev => prev.filter(app => app.id !== applicationId));
+      toast.success('Đã từ chối ứng viên thành công.');
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Từ chối ứng viên thất bại.'));
+    } finally {
+      setIsProcessing(false);
+      setConfirmAction(null);
+    }
+  };
 
-  if (errorMsg) return (
-    <div className="state-center container" style={{ padding: '8rem 0' }}>
-      <AlertCircle size={64} style={{ color: '#dc2626', marginBottom: '1.5rem' }} />
-      <h3>Lỗi truy cập</h3>
-      <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>{errorMsg}</p>
-      <Link to="/dashboard/quan-ly-tin">
-        <Button variant="outline"><ArrowLeft size={18} /> Quay lại quản lý tin</Button>
-      </Link>
-    </div>
-  );
+  const askAccept = applicationId => {
+    setConfirmAction({
+      type: 'accept',
+      title: 'Xác nhận nhận ứng viên',
+      description: 'Khi nhận ứng viên này, tin đăng sẽ được chuyển sang trạng thái đang thực hiện.',
+      confirmText: 'Nhận ngay',
+      confirmVariant: 'primary',
+      onConfirm: () => runAccept(applicationId),
+    });
+  };
+
+  const askReject = applicationId => {
+    setConfirmAction({
+      type: 'reject',
+      title: 'Xác nhận từ chối ứng viên',
+      description: 'Ứng viên này sẽ bị xóa khỏi danh sách ứng tuyển của tin đăng.',
+      confirmText: 'Từ chối',
+      confirmVariant: 'outline',
+      onConfirm: () => runReject(applicationId),
+    });
+  };
+
+  const handleOpenCv = async applicationId => {
+    setOpeningCvId(applicationId);
+    try {
+      const response = await axios.get(`${pageUrl}/api/Job/applications/${applicationId}/cv`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const cvUrl = response.data?.url;
+      if (!cvUrl) {
+        throw new Error('Không tìm thấy đường dẫn CV hợp lệ.');
+      }
+
+      window.open(cvUrl, '_blank', 'noopener,noreferrer');
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Không mở được hồ sơ đính kèm.'));
+    } finally {
+      setOpeningCvId(null);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="state-center container" style={{ padding: '8rem 0' }}>
+        <Loader2 className="animate-spin text-primary" size={48} style={{ marginBottom: '1rem' }} />
+        <p>Đang tải danh sách ứng viên...</p>
+      </div>
+    );
+  }
+
+  if (errorMsg) {
+    return (
+      <div className="state-center container" style={{ padding: '8rem 0' }}>
+        <AlertCircle size={64} style={{ color: '#dc2626', marginBottom: '1.5rem' }} />
+        <h3>Lỗi truy cập</h3>
+        <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>{errorMsg}</p>
+        <Link to="/dashboard/quan-ly-tin">
+          <Button variant="outline">
+            <ArrowLeft size={18} /> Quay lại quản lý tin
+          </Button>
+        </Link>
+      </div>
+    );
+  }
 
   return (
-    <div className="container" style={{ padding: '2rem 1rem' }}>
-      <Link to="/dashboard/quan-ly-tin" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-        <ArrowLeft size={18} /> Quay lại danh sách tin đăng
-      </Link>
+    <>
+      <div className="container" style={{ padding: '2rem 1rem' }}>
+        <Link
+          to="/dashboard/quan-ly-tin"
+          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none', color: 'var(--text-muted)', marginBottom: '1.5rem' }}
+        >
+          <ArrowLeft size={18} /> Quay lại danh sách tin đăng
+        </Link>
 
-      <div style={{ marginBottom: '2.5rem' }}>
-        <h1 style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>Danh Sách Ứng Viên</h1>
-        <p style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)' }}>
-          <FileText size={18} /> Công việc: <strong style={{color: 'var(--text-main)'}}>{job?.title}</strong>
-        </p>
-      </div>
+        <div style={{ marginBottom: '2.5rem' }}>
+          <h1 style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>Danh sách ứng viên</h1>
+          <p style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)' }}>
+            <FileText size={18} /> Công việc: <strong style={{ color: 'var(--text-main)' }}>{job?.title}</strong>
+          </p>
+          {user?.isGuest && (
+            <p style={{ marginTop: '0.75rem', color: 'var(--primary-color)', fontWeight: 600 }}>
+              Bạn đang dùng tài khoản khách. Tin đăng vẫn được lưu và có thể quản lý bình thường trong dashboard.
+            </p>
+          )}
+        </div>
 
-      {apps.length === 0 ? (
-        <Card style={{ padding: '4rem', textAlign: 'center', border: '2px dashed #e2e8f0' }}>
-          <CardBody>
-            <User size={64} style={{ color: '#cbd5e1', marginBottom: '1rem' }} />
-            <h3>Chưa có ai ứng tuyển</h3>
-            <p style={{ color: 'var(--text-muted)', marginTop: '0.5rem' }}>Hãy chia sẻ tin đăng của bạn lên các cộng đồng để tìm người nhanh hơn.</p>
-          </CardBody>
-        </Card>
-      ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '1.5rem' }}>
-          {apps.map(app => (
-            <Card key={app.id} style={{ border: app.isAccepted ? '2px solid var(--status-success)' : '1px solid #e2e8f0' }}>
-              <CardBody style={{ padding: '1.5rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
-                  <div style={{ display: 'flex', gap: '1rem' }}>
-                    <div style={{ width: 56, height: 56, borderRadius: '50%', backgroundColor: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary-color)', fontWeight: 'bold', fontSize: '1.2rem' }}>
-                      {app.applicantName?.charAt(0) || 'U'}
-                    </div>
-                    <div>
-                      <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '1.1rem' }}>{app.applicantName}</h3>
-                      <div className="flex-center" style={{ gap: '0.25rem', fontSize: '0.85rem', color: 'var(--text-warning)' }}>
-                        <Star size={14} fill="currentColor" /> <span>4.9 (Tốt)</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {app.isAccepted && (
-                    <span style={{ backgroundColor: 'rgba(39, 174, 96, 0.1)', color: 'var(--status-success)', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>
-                      Đã Nhận Việc
-                    </span>
-                  )}
-                </div>
+        <section style={{ marginBottom: '2rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+            <Sparkles size={20} style={{ color: 'var(--primary-color)' }} />
+            <h2 style={{ margin: 0, fontSize: '1.25rem' }}>Ứng viên phù hợp từ hệ thống matching</h2>
+          </div>
 
-                <div style={{ backgroundColor: '#f8fafc', padding: '1rem', borderRadius: '8px', marginBottom: '1.25rem' }}>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Lời giới thiệu / Tin nhắn:</div>
-                  <p style={{ fontSize: '0.95rem', fontStyle: 'italic', color: 'var(--text-main)', margin: 0 }}>
-                    "{app.message || 'Không có tin nhắn giới thiệu.'}"
-                  </p>
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
-                  <div style={{ color: 'var(--text-muted)' }}>Giá đề xuất:</div>
-                  <div style={{ fontWeight: 700, color: 'var(--primary-color)', fontSize: '1.1rem' }}>
-                    {app.bidPrice.toLocaleString()}đ
-                  </div>
-                </div>
-
-                {app.cvUrl && (
-                  <a href={app.cvUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary-color)', fontSize: '0.9rem', marginBottom: '1.5rem', textDecoration: 'none' }}>
-                    <FileText size={16} /> Xem hồ sơ đính kèm (CV)
-                  </a>
-                )}
-
-                {!app.isAccepted ? (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                    <Button variant="outline" fullWidth style={{ color: '#dc2626', borderColor: '#feb2b2' }}>
-                      <XCircle size={18} /> Từ chối
-                    </Button>
-                    <Button 
-                      variant="primary" 
-                      fullWidth 
-                      onClick={() => handleAccept(app.id)}
-                      disabled={isProcessing}
-                      style={{ backgroundColor: 'var(--status-success)', borderColor: 'var(--status-success)' }}
-                    >
-                      {isProcessing ? <Loader2 className="animate-spin" size={18} /> : <><CheckCircle2 size={18} /> Nhận Ngay</>}
-                    </Button>
-                  </div>
-                ) : (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                    {user?.hasPremiumAccess ? (
-                      <>
-                        <Button variant="outline" className="w-full" icon={<Phone size={18} />} onClick={() => window.location.href = `tel:${app.applicantPhone}`}>
-                          Gọi Điện
-                        </Button>
-                        <Button variant="primary" className="w-full" icon={<Mail size={18} />} onClick={() => window.location.href = `mailto:${app.applicantEmail}`}>
-                          Gửi Email
-                        </Button>
-                      </>
-                    ) : (
-                      <div style={{ gridColumn: 'span 2' }}>
-                        <Button variant="outline" fullWidth style={{ color: 'var(--primary-color)', borderColor: 'var(--primary-color)', backgroundColor: 'rgba(47, 128, 237, 0.05)' }} onClick={() => navigate('/dich-vu-noi-bat')}>
-                          Mua Gói Để Xem Liên Hệ
-                        </Button>
-                        <p style={{ fontSize: '0.8rem', color: '#dc2626', marginTop: '0.5rem', textAlign: 'center' }}>
-                          *SĐT và Email đang bị ẩn. Vui lòng nâng cấp gói Pro.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-                
-                {app.isAccepted && (
-                   <div className="flex-center mt-3" style={{ gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                      <ShieldCheck size={16} className="text-primary" /> Bạn đã có thể liên hệ trực tiếp với người làm.
-                   </div>
-                )}
+          {isMatchLoading ? (
+            <Card>
+              <CardBody style={{ padding: '1.5rem', textAlign: 'center' }}>
+                <Loader2 className="animate-spin" size={24} style={{ color: 'var(--primary-color)', marginBottom: '0.75rem' }} />
+                <p style={{ margin: 0 }}>Đang tính toán ứng viên phù hợp cho tin đăng này...</p>
               </CardBody>
             </Card>
-          ))}
+          ) : matchError ? (
+            <Card>
+              <CardBody style={{ padding: '1.25rem', color: '#dc2626' }}>
+                <AlertCircle size={18} style={{ marginRight: '0.5rem' }} />
+                {matchError}
+              </CardBody>
+            </Card>
+          ) : matches.length === 0 ? (
+            <Card>
+              <CardBody style={{ padding: '1.5rem', textAlign: 'center' }}>
+                <p style={{ margin: 0, color: 'var(--text-muted)' }}>Chưa có gợi ý matching đủ mạnh cho tin đăng này.</p>
+              </CardBody>
+            </Card>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem' }}>
+              {matches.map(match => (
+                <Card key={match.workerId} style={{ border: '1px solid rgba(47, 128, 237, 0.18)', background: 'linear-gradient(180deg, rgba(47, 128, 237, 0.04), #fff)' }}>
+                  <CardBody style={{ padding: '1.25rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem' }}>
+                      <div style={{ display: 'flex', gap: '0.75rem' }}>
+                        <div
+                          style={{
+                            width: 52,
+                            height: 52,
+                            borderRadius: '50%',
+                            backgroundColor: '#eef4ff',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            overflow: 'hidden',
+                            color: 'var(--primary-color)',
+                            fontWeight: 700,
+                          }}
+                        >
+                          {match.avatarUrl ? (
+                            <img src={match.avatarUrl} alt={match.fullName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          ) : (
+                            match.fullName?.charAt(0) || 'U'
+                          )}
+                        </div>
+                        <div>
+                          <h3 style={{ margin: '0 0 0.3rem 0', fontSize: '1.05rem' }}>{match.fullName}</h3>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                            <Star size={14} fill="currentColor" /> {match.averageRating} • {match.reviewCount} đánh giá
+                          </div>
+                        </div>
+                      </div>
+                      <span style={badgeStyle}>{match.matchScore}% match</span>
+                    </div>
+
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
+                      <span style={badgeStyle}>
+                        <MapPin size={14} /> {match.distanceKm} km
+                      </span>
+                      <span style={badgeStyle}>
+                        <BadgeCheck size={14} /> {match.experienceYears} năm KN
+                      </span>
+                      {match.verified && (
+                        <span style={badgeStyle}>
+                          <ShieldCheck size={14} /> Đã xác minh
+                        </span>
+                      )}
+                    </div>
+
+                    <div style={{ fontSize: '0.95rem', marginBottom: '0.75rem' }}>
+                      <strong>Mức giá mong muốn:</strong> {formatMoney(match.hourlyRate)} / giờ
+                    </div>
+
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      {(match.matchedSkills || []).length > 0 ? (
+                        match.matchedSkills.map(skill => (
+                          <span key={skill} style={{ ...badgeStyle, background: 'rgba(39, 174, 96, 0.1)', color: 'var(--status-success)' }}>
+                            {skill}
+                          </span>
+                        ))
+                      ) : (
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                          Chưa có kỹ năng trùng rõ ràng, hệ thống đang ưu tiên theo vị trí và độ phù hợp tổng thể.
+                        </span>
+                      )}
+                    </div>
+                  </CardBody>
+                </Card>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+            <FileText size={20} style={{ color: 'var(--primary-color)' }} />
+            <h2 style={{ margin: 0, fontSize: '1.25rem' }}>Ứng viên đã ứng tuyển</h2>
+          </div>
+
+          {apps.length === 0 ? (
+            <Card style={{ padding: '4rem', textAlign: 'center', border: '2px dashed #e2e8f0' }}>
+              <CardBody>
+                <User size={64} style={{ color: '#cbd5e1', marginBottom: '1rem' }} />
+                <h3>Chưa có ai ứng tuyển</h3>
+                <p style={{ color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+                  Bạn có thể tham khảo danh sách matching ở phía trên trong lúc chờ hồ sơ thực.
+                </p>
+              </CardBody>
+            </Card>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '1.5rem' }}>
+              {apps.map(app => (
+                <Card key={app.id} style={{ border: app.isAccepted ? '2px solid var(--status-success)' : '1px solid #e2e8f0' }}>
+                  <CardBody style={{ padding: '1.5rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+                      <div style={{ display: 'flex', gap: '1rem' }}>
+                        <div
+                          style={{
+                            width: 56,
+                            height: 56,
+                            borderRadius: '50%',
+                            backgroundColor: '#f1f5f9',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'var(--primary-color)',
+                            fontWeight: 'bold',
+                            fontSize: '1.2rem',
+                          }}
+                        >
+                          {app.applicantName?.charAt(0) || 'U'}
+                        </div>
+                        <div>
+                          <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '1.1rem' }}>{app.applicantName}</h3>
+                          <div className="flex-center" style={{ gap: '0.25rem', fontSize: '0.85rem', color: 'var(--text-warning)' }}>
+                            <Star size={14} fill="currentColor" /> <span>4.9 (Tốt)</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {app.isAccepted && (
+                        <span style={{ backgroundColor: 'rgba(39, 174, 96, 0.1)', color: 'var(--status-success)', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>
+                          Đã nhận việc
+                        </span>
+                      )}
+                    </div>
+
+                    <div style={{ backgroundColor: '#f8fafc', padding: '1rem', borderRadius: '8px', marginBottom: '1.25rem' }}>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Lời giới thiệu / Tin nhắn:</div>
+                      <p style={{ fontSize: '0.95rem', fontStyle: 'italic', color: 'var(--text-main)', margin: 0 }}>
+                        "{app.message || 'Không có tin nhắn giới thiệu.'}"
+                      </p>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+                      <div style={{ color: 'var(--text-muted)' }}>Giá đề xuất:</div>
+                      <div style={{ fontWeight: 700, color: 'var(--primary-color)', fontSize: '1.1rem' }}>{formatMoney(app.bidPrice)}</div>
+                    </div>
+
+                    {app.cvUrl === '[Processing...]' && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+                        <Loader2 size={16} className="animate-spin" /> CV đang được xử lý...
+                      </div>
+                    )}
+
+                    {app.cvUrl && app.cvUrl !== '[Processing...]' && (
+                      <button
+                        type="button"
+                        onClick={() => handleOpenCv(app.id)}
+                        disabled={openingCvId === app.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          color: 'var(--primary-color)',
+                          fontSize: '0.9rem',
+                          marginBottom: '1.5rem',
+                          background: 'none',
+                          border: 'none',
+                          padding: 0,
+                          cursor: openingCvId === app.id ? 'wait' : 'pointer',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {openingCvId === app.id ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />}
+                        {openingCvId === app.id ? 'Đang mở CV...' : 'Xem hồ sơ đính kèm (CV)'}
+                      </button>
+                    )}
+
+                    {!app.isAccepted ? (
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                        <Button
+                          variant="outline"
+                          fullWidth
+                          onClick={() => askReject(app.id)}
+                          disabled={isProcessing}
+                          style={{ color: '#dc2626', borderColor: '#feb2b2' }}
+                        >
+                          <XCircle size={18} /> Từ chối
+                        </Button>
+                        <Button
+                          variant="primary"
+                          fullWidth
+                          onClick={() => askAccept(app.id)}
+                          disabled={isProcessing}
+                          style={{ backgroundColor: 'var(--status-success)', borderColor: 'var(--status-success)' }}
+                        >
+                          {isProcessing && confirmAction?.type === 'accept' ? (
+                            <Loader2 className="animate-spin" size={18} />
+                          ) : (
+                            <>
+                              <CheckCircle2 size={18} /> Nhận ngay
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                        {user?.hasPremiumAccess ? (
+                          <>
+                            <Button variant="outline" className="w-full" icon={<Phone size={18} />} onClick={() => (window.location.href = `tel:${app.applicantPhone}`)}>
+                              Gọi điện
+                            </Button>
+                            <Button variant="primary" className="w-full" icon={<Mail size={18} />} onClick={() => (window.location.href = `mailto:${app.applicantEmail}`)}>
+                              Gửi email
+                            </Button>
+                          </>
+                        ) : (
+                          <div style={{ gridColumn: 'span 2' }}>
+                            <Button variant="outline" fullWidth style={{ color: 'var(--primary-color)', borderColor: 'var(--primary-color)', backgroundColor: 'rgba(47, 128, 237, 0.05)' }} onClick={() => navigate('/dich-vu-noi-bat')}>
+                              Mua gói để xem liên hệ
+                            </Button>
+                            <p style={{ fontSize: '0.8rem', color: '#dc2626', marginTop: '0.5rem', textAlign: 'center' }}>
+                              *SĐT và Email đang bị ẩn. Vui lòng nâng cấp gói Pro.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {app.isAccepted && (
+                      <div className="flex-center mt-3" style={{ gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                        <ShieldCheck size={16} className="text-primary" /> Bạn đã có thể liên hệ trực tiếp với người làm.
+                      </div>
+                    )}
+                  </CardBody>
+                </Card>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
+
+      {confirmAction && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.45)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+            zIndex: 1000,
+          }}
+          onClick={() => !isProcessing && setConfirmAction(null)}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '420px',
+              backgroundColor: '#fff',
+              borderRadius: '16px',
+              padding: '1.5rem',
+              boxShadow: '0 20px 60px rgba(15, 23, 42, 0.2)',
+            }}
+            onClick={event => event.stopPropagation()}
+          >
+            <h3 style={{ margin: '0 0 0.75rem 0', fontSize: '1.2rem' }}>{confirmAction.title}</h3>
+            <p style={{ margin: '0 0 1.5rem 0', color: 'var(--text-muted)', lineHeight: 1.6 }}>{confirmAction.description}</p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+              <Button variant="outline" onClick={() => setConfirmAction(null)} disabled={isProcessing}>
+                Hủy
+              </Button>
+              <Button
+                variant={confirmAction.confirmVariant}
+                onClick={confirmAction.onConfirm}
+                disabled={isProcessing}
+                style={confirmAction.type === 'reject' ? { color: '#dc2626', borderColor: '#feb2b2' } : undefined}
+              >
+                {isProcessing ? 'Đang xử lý...' : confirmAction.confirmText}
+              </Button>
+            </div>
+          </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 

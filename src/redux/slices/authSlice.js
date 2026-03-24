@@ -1,9 +1,14 @@
 import { createSlice } from '@reduxjs/toolkit';
+import { normalizeStoredUser } from '../../utils/auth';
+
+const storedToken = localStorage.getItem('token');
+let storedUser = null;
+try { storedUser = normalizeStoredUser(JSON.parse(localStorage.getItem('user'))); } catch {}
 
 const initialState = {
-  user: null, // { id, name, email, role, avatar }
-  token: null,
-  isAuthenticated: false,
+  user: storedUser,
+  token: storedToken,
+  isAuthenticated: !!storedToken,
   loading: false,
   error: null,
 };
@@ -19,14 +24,25 @@ const authSlice = createSlice({
     loginSuccess: (state, action) => {
       state.loading = false;
       state.isAuthenticated = true;
-      state.user = action.payload.user;
+      state.user = normalizeStoredUser(action.payload.user);
       state.token = action.payload.token;
+      localStorage.setItem('token', action.payload.token);
+      localStorage.setItem('user', JSON.stringify(state.user));
     },
     loginFailure: (state, action) => {
       state.loading = false;
       state.error = action.payload;
     },
+    updateUser: (state, action) => {
+      state.user = normalizeStoredUser({
+        ...state.user,
+        ...action.payload,
+      });
+      localStorage.setItem('user', JSON.stringify(state.user));
+    },
     logout: (state) => {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
@@ -34,6 +50,6 @@ const authSlice = createSlice({
   },
 });
 
-export const { loginStart, loginSuccess, loginFailure, logout } = authSlice.actions;
+export const { loginStart, loginSuccess, loginFailure, updateUser, logout } = authSlice.actions;
 
 export default authSlice.reducer;

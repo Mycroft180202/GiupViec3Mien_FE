@@ -70,6 +70,16 @@
   padding-right: 2rem;
 }
 
+.search-link,
+.section-link-button,
+.job-action-link {
+  text-decoration: none;
+}
+
+.job-action-link {
+  flex: 1;
+}
+
 @media (max-width: 768px) {
   .search-box {
     flex-direction: column;
@@ -263,9 +273,19 @@
 }
 
 @media (max-width: 768px) {
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
   .trust-banner {
     padding: 1.5rem;
     flex-direction: column;
     text-align: center;
+  }
+
+  .job-actions {
+    flex-direction: column;
   }
 }

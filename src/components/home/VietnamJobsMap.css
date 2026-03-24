@@ -1,0 +1,314 @@
+.vietnam-map-section {
+  padding: 1rem 0;
+}
+
+.vietnam-map-shell {
+  background:
+    linear-gradient(180deg, rgba(63, 124, 172, 0.12), rgba(63, 124, 172, 0.02)),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.8) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.8) 1px, transparent 1px);
+  background-size: auto, 28px 28px, 28px 28px;
+  border: 1px solid rgba(63, 124, 172, 0.15);
+  border-radius: 32px;
+  box-shadow: 0 24px 60px rgba(28, 50, 86, 0.08);
+  overflow: hidden;
+  padding: 2.5rem;
+}
+
+.vietnam-map-copy {
+  margin-bottom: 2rem;
+  max-width: 720px;
+}
+
+.vietnam-map-kicker {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(42, 111, 219, 0.1);
+  color: var(--primary-color);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.vietnam-map-title {
+  margin: 1rem 0 0.75rem;
+  font-size: clamp(2rem, 4vw, 2.9rem);
+  line-height: 1.15;
+}
+
+.vietnam-map-subtitle {
+  margin: 0;
+  max-width: 620px;
+  color: var(--text-muted);
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+.vietnam-map-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.9fr);
+  gap: 2rem;
+  align-items: stretch;
+}
+
+.vietnam-map-canvas,
+.vietnam-map-panel {
+  min-height: 760px;
+}
+
+.vietnam-map-canvas {
+  position: relative;
+  background: linear-gradient(180deg, #78a7c1 0%, #5b8fb0 100%);
+  border-radius: 28px;
+  overflow: hidden;
+  padding: 2rem 1rem;
+  isolation: isolate;
+}
+
+.vietnam-map-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.18) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.18) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+
+.vietnam-map-svg-wrap {
+  position: absolute;
+  inset: 1.5rem 18% 1.5rem 18%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  pointer-events: auto;
+}
+
+.vietnam-real-map {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 360px;
+  max-height: 100%;
+  filter: drop-shadow(0 18px 28px rgba(6, 34, 61, 0.18));
+  overflow: visible;
+}
+
+.vietnam-real-map .mapsvg-region {
+  fill: rgba(236, 239, 244, 0.94);
+  stroke: rgba(119, 141, 165, 0.85);
+  stroke-width: 0.8;
+  transition: fill 0.18s ease, stroke 0.18s ease, opacity 0.18s ease;
+  opacity: 0.95;
+}
+
+.vietnam-real-map .mapsvg-region.is-interactive {
+  cursor: pointer;
+}
+
+.vietnam-real-map .mapsvg-region.active {
+  fill: #ffbf1f;
+  stroke: #9c2b1f;
+  opacity: 1;
+}
+
+.province-callout {
+  position: absolute;
+  z-index: 3;
+  min-width: 160px;
+  max-width: 220px;
+  padding: 0.85rem 1rem;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.96);
+  color: #17314a;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.35;
+  box-shadow: 0 18px 32px rgba(20, 42, 63, 0.16);
+  transform: translateY(-50%);
+}
+
+.province-callout.is-left {
+  transform: translate(-100%, -50%);
+}
+
+.province-callout::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 0.95rem;
+  height: 0.95rem;
+  background: rgba(255, 255, 255, 0.96);
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.province-callout.is-right::before {
+  left: -0.45rem;
+}
+
+.province-callout.is-left::before {
+  right: -0.45rem;
+}
+
+.vietnam-map-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: linear-gradient(180deg, #ffffff 0%, #f5f9ff 100%);
+  border-radius: 28px;
+  padding: 1.75rem;
+  box-shadow: inset 0 0 0 1px rgba(63, 124, 172, 0.12);
+}
+
+.province-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.province-panel-header h3 {
+  margin: 0.3rem 0 0;
+  font-size: 1.8rem;
+}
+
+.province-panel-region {
+  color: var(--primary-color);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.province-panel-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 999px;
+  background: rgba(42, 111, 219, 0.08);
+  color: var(--primary-color);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.province-panel-block {
+  padding: 1.2rem 1.1rem;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 12px 24px rgba(49, 87, 133, 0.06);
+}
+
+.province-panel-block + .province-panel-block {
+  margin-top: 1rem;
+}
+
+.province-panel-block-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.9rem;
+  color: #17314a;
+  font-weight: 700;
+}
+
+.province-role-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--text-main);
+  line-height: 1.75;
+}
+
+.province-panel-note {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+
+.province-panel-actions {
+  display: grid;
+  gap: 0.9rem;
+  margin-top: 1.5rem;
+}
+
+.province-panel-link {
+  text-decoration: none;
+}
+
+.province-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.province-chip {
+  border: 1px solid rgba(42, 111, 219, 0.15);
+  background: rgba(255, 255, 255, 0.82);
+  color: #17314a;
+  border-radius: 999px;
+  padding: 0.7rem 0.95rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease;
+}
+
+.province-chip:hover,
+.province-chip:focus-visible,
+.province-chip.active {
+  border-color: rgba(42, 111, 219, 0.45);
+  background: rgba(42, 111, 219, 0.1);
+  color: var(--primary-color);
+  outline: none;
+}
+
+@media (max-width: 1100px) {
+  .vietnam-map-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .vietnam-map-canvas,
+  .vietnam-map-panel {
+    min-height: 640px;
+  }
+
+  .vietnam-map-svg-wrap {
+    inset: 1.5rem 22% 1.5rem 22%;
+  }
+}
+
+@media (max-width: 768px) {
+  .vietnam-map-shell {
+    padding: 1.25rem;
+    border-radius: 24px;
+  }
+
+  .vietnam-map-canvas,
+  .vietnam-map-panel {
+    min-height: 540px;
+  }
+
+  .vietnam-map-panel {
+    padding: 1.25rem;
+  }
+
+  .vietnam-map-svg-wrap {
+    inset: 1rem 24% 1rem 24%;
+  }
+
+  .province-panel-header {
+    flex-direction: column;
+  }
+
+  .province-callout {
+    min-width: 140px;
+    max-width: 180px;
+    padding: 0.7rem 0.85rem;
+  }
+}

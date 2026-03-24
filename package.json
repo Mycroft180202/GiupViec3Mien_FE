@@ -12,12 +12,14 @@
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
+    "@microsoft/signalr": "^10.0.0",
     "@reduxjs/toolkit": "^2.11.2",
     "axios": "^1.13.6",
     "classnames": "^2.5.1",
     "lucide-react": "^0.577.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-hot-toast": "^2.6.0",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.13.1"
   },

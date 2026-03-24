@@ -2,68 +2,69 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import axios from 'axios';
-import { loginStart, loginSuccess, loginFailure } from '../../redux/slices/authSlice';
+import toast from 'react-hot-toast';
 import { Phone, Lock } from 'lucide-react';
+import { loginStart, loginSuccess, loginFailure } from '../../redux/slices/authSlice';
+import { buildUserFromAuthResponse } from '../../utils/auth';
+import { getApiErrorMessage } from '../../utils/api';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 
 const Login = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  // Set demo account as default
-  const [formData, setFormData] = useState({ 
-    phone: '0901234567', 
-    password: 'password123' 
+
+  const [formData, setFormData] = useState({
+    phone: '',
+    password: '',
   });
+  const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.id]: e.target.value });
+    const { id, value } = e.target;
+    setFormData((prev) => ({ ...prev, [id]: value }));
+    setErrors((prev) => ({ ...prev, [id]: '' }));
+  };
+
+  const validateForm = () => {
+    const nextErrors = {};
+
+    if (!formData.phone.trim()) {
+      nextErrors.phone = 'Số điện thoại là bắt buộc.';
+    }
+
+    if (!formData.password.trim()) {
+      nextErrors.password = 'Mật khẩu là bắt buộc.';
+    }
+
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateForm()) return;
+
     setIsLoading(true);
-    setErrorMsg('');
     dispatch(loginStart());
 
     try {
       const response = await axios.post('https://localhost:7004/api/Auth/login', formData);
       const data = response.data;
-      
-      // Map API response (Numeric Enum) to Frontend format (Strings)
-      // Backend: 0 = Admin, 1 = Employer, 2 = Worker
-      const roleMap = {
-        0: 'admin',
-        1: 'employer',
-        2: 'worker',
-        'Admin': 'admin',
-        'Employer': 'employer',
-        'Worker': 'worker'
-      };
-      
-      const role = roleMap[data.role] || 'employer';
-
-      const user = {
-        name: data.fullName,
-        phone: data.phone,
-        role: role,
-        hasPremiumAccess: data.hasPremiumAccess,
-        premiumExpiry: data.premiumExpiry
-      };
+      const user = buildUserFromAuthResponse(data);
 
       dispatch(loginSuccess({ user, token: data.token }));
-      
-      // Redirect based on role
-      if (role === 'admin') {
+      toast.success(`Đăng nhập thành công! Chào mừng ${user.name}`);
+
+      if (user.role === 'admin') {
         navigate('/dashboard/tong-quan');
       } else {
         navigate('/');
       }
     } catch (err) {
-      const message = err.response?.data?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại.';
-      setErrorMsg(message);
+      const message = getApiErrorMessage(err, 'Đăng nhập thất bại. Vui lòng kiểm tra lại.');
+      toast.error(message);
       dispatch(loginFailure(message));
     } finally {
       setIsLoading(false);
@@ -75,50 +76,28 @@ const Login = () => {
       <h2 className="auth-title">Chào mừng trở lại</h2>
       <p className="auth-subtitle">Đăng nhập để vào hệ thống quản lý công việc của bạn.</p>
 
-      {errorMsg && (
-        <div style={{ padding: '0.75rem', backgroundColor: '#fee2e2', color: '#dc2626', borderRadius: '8px', marginBottom: '1rem', border: '1px solid #fecaca' }}>
-          {errorMsg}
-        </div>
-      )}
-
-      <div style={{ padding: '0.75rem', backgroundColor: '#e0f2fe', color: '#0369a1', borderRadius: '8px', marginBottom: '1.5rem', fontSize: '0.9rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-        <div style={{ flex: 1, minWidth: '120px' }}>
-          <strong>Chủ Thuê:</strong><br/>
-          0901234567<br/>
-          password123
-        </div>
-        <div style={{ flex: 1, minWidth: '120px' }}>
-          <strong>Người Làm:</strong><br/>
-          0987654321<br/>
-          password123
-        </div>
-        <div style={{ flex: 1, minWidth: '120px' }}>
-          <strong>Admin:</strong><br/>
-          0123456789<br/>
-          password123
-        </div>
-      </div>
-
       <form className="auth-form" onSubmit={handleSubmit}>
-        <Input 
-          id="phone" 
-          label="Số điện thoại" 
-          type="text" 
+        <Input
+          id="phone"
+          label="Số điện thoại"
+          type="text"
           placeholder="0901234567"
           icon={<Phone size={20} />}
           value={formData.phone}
           onChange={handleChange}
+          error={errors.phone}
           required
         />
-        
-        <Input 
-          id="password" 
-          label="Mật khẩu" 
-          type="password" 
+
+        <Input
+          id="password"
+          label="Mật khẩu"
+          type="password"
           placeholder="password123"
           icon={<Lock size={20} />}
           value={formData.password}
           onChange={handleChange}
+          error={errors.password}
           required
         />
 
