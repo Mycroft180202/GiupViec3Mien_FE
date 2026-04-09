@@ -68,7 +68,7 @@ const EmployerDashboard = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       setJobs((prev) => prev.filter((job) => job.id !== id));
-    } catch (err) {
+    } catch {
       alert('Không thể xóa tin. Vui lòng thử lại.');
     }
   };

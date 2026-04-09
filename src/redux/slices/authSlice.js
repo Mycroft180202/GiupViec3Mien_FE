@@ -3,7 +3,7 @@ import { normalizeStoredUser } from '../../utils/auth';
 
 const storedToken = localStorage.getItem('token');
 let storedUser = null;
-try { storedUser = normalizeStoredUser(JSON.parse(localStorage.getItem('user'))); } catch {}
+try { storedUser = normalizeStoredUser(JSON.parse(localStorage.getItem('user'))); } catch { storedUser = null; }
 
 const initialState = {
   user: storedUser,

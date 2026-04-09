@@ -25,7 +25,7 @@ const WorkerSchedule = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       setSchedule(response.data);
-    } catch (err) {
+    } catch {
       setErrorMsg('Không thể tải lịch làm việc.');
     } finally {
       setIsLoading(false);

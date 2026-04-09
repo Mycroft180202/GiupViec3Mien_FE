@@ -62,7 +62,7 @@ const WorkerDashboard = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       setApps(response.data);
-    } catch (err) {
+    } catch {
       setErrorMsg('Không thể tải danh sách ứng tuyển. Vui lòng thử lại.');
     } finally {
       setIsLoading(false);

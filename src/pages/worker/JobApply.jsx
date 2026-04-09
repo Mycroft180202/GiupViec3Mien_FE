@@ -62,7 +62,7 @@ const JobApply = () => {
           bidPrice: response.data.price || 0,
           availableStartDate: response.data.workDate ? String(response.data.workDate).slice(0, 10) : '',
         }));
-      } catch (err) {
+      } catch {
         toast.error('Không tìm thấy thông tin công việc.');
         navigate('/tim-viec');
       } finally {

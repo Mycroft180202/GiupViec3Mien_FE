@@ -6,6 +6,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { Bell, LogOut, Menu, UserCircle } from 'lucide-react';
 import { logout } from '../../redux/slices/authSlice';
+import { DEMO_MODE } from '../../mock/demoConfig';
 import Button from '../ui/Button';
 import './Header.css';
 
@@ -62,6 +63,10 @@ const Header = () => {
     }
 
     loadNotifications();
+
+    if (DEMO_MODE) {
+      return undefined;
+    }
 
     const connection = new HubConnectionBuilder()
       .withUrl(`${apiBaseUrl}/notificationHub`, {
